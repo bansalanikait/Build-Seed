@@ -1,7 +1,21 @@
 /*************************************************
     CampusFlow Firebase Authentication
 *************************************************/
-const CF_AUTH_API_BASE = "https://build-seed.onrender.com";
+function cfResolveAuthApiBase() {
+    const override = (localStorage.getItem("cfApiBaseOverride") || "").trim();
+    if (override) {
+        return override.replace(/\/+$/, "");
+    }
+
+    const host = window.location.hostname;
+    const isLocal =
+        window.location.protocol === "file:" ||
+        host === "localhost" ||
+        host === "127.0.0.1";
+    return isLocal ? "http://127.0.0.1:5000" : "https://build-seed.onrender.com";
+}
+
+const CF_AUTH_API_BASE = cfResolveAuthApiBase();
 
 const cfElTabLogin = document.getElementById("cf-tab-login");
 const cfElTabSignup = document.getElementById("cf-tab-signup");
