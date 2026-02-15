@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CampusFlow - Safe Arrival Tracker</title>
+    <link rel="stylesheet" href="css/style_student.css">
+</head>
+<body>
+
+    <div class="cf-container" id="cf-commute-page">
+        <h2>Safe Arrival Tracker</h2>
+        <div class="cf-page-links">
+            <a href="student.html" class="cf-nav-link">Back to Modules</a>
+        </div>
+
+        <section class="cf-dashboard-section cf-commute-section">
+            <div class="cf-section-header">
+                <h3>Home to Institute ETA</h3>
+                <p>Submit your expected arrival from home and update once you reach safely.</p>
+            </div>
+
+            <div class="cf-card">
+                <h3>Submit Expected Arrival</h3>
+                <form id="cf-commute-form" class="cf-commute-form">
+                    <input type="date" id="cf-commute-date" required>
+                    <input type="time" id="cf-commute-eta" required>
+                    <select id="cf-commute-mode">
+                        <option value="">Travel Mode (Optional)</option>
+                        <option value="Walking">Walking</option>
+                        <option value="Bicycle">Bicycle</option>
+                        <option value="Bus">Bus</option>
+                        <option value="Auto">Auto</option>
+                        <option value="Car">Car</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="text" id="cf-commute-notes" placeholder="Optional notes">
+                    <button type="submit">Submit ETA</button>
+                </form>
+            </div>
+
+            <div class="cf-card">
+                <h3>Your Commute Entries</h3>
+                <div id="cf-commute-list-container"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <button onclick="cfHandleLogout()">Logout</button>
+
+</body>
+</html>

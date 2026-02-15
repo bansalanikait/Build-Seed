@@ -207,11 +207,40 @@ button:hover {
     gap: 12px;
 }
 
+#cf-admin-alert-container {
+    display: grid;
+    gap: 10px;
+}
+
+#cf-admin-commute-alert-container {
+    display: grid;
+    gap: 10px;
+}
+
+.cf-safety-alert-item {
+    border: 1px solid #fecaca;
+    border-left: 6px solid #dc2626;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fef2f2;
+}
+
+.cf-safety-alert-item p {
+    color: #7f1d1d;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
 .cf-booking-item {
     border: 1px solid var(--cf-border);
     border-radius: 14px;
     padding: 14px;
     background: #fcfefe;
+}
+
+.cf-booking-item.cf-booking-alert {
+    border-color: #fca5a5;
+    background: #fff7f7;
 }
 
 .cf-booking-item p {
@@ -252,6 +281,11 @@ button:hover {
 
 .cf-booking-item[data-status="rejected"] {
     border-left: 6px solid #b42318;
+}
+
+.cf-admin-alert-inline {
+    color: #b42318;
+    font-weight: 700;
 }
 
 .cf-empty-message {

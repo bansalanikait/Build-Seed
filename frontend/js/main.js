@@ -7,6 +7,9 @@ const cfFoodReviewState = {
     summaryWeek: "",
     hostels: []
 };
+const cfCommuteState = {
+    entries: []
+};
 
 function cfGetAuthHeaders() {
     const token = localStorage.getItem("cfFirebaseIdToken");
@@ -52,11 +55,16 @@ async function cfCreateBooking(event) {
         date: document.getElementById("cf-input-date").value,
         start_time: document.getElementById("cf-input-start-time").value,
         end_time: document.getElementById("cf-input-end-time").value,
+        expected_arrival_time: document.getElementById("cf-input-expected-arrival").value,
         purpose: document.getElementById("cf-input-purpose").value.trim()
     };
 
     if (payload.start_time >= payload.end_time) {
         alert("End time must be greater than start time.");
+        return;
+    }
+    if (payload.expected_arrival_time < payload.start_time || payload.expected_arrival_time > payload.end_time) {
+        alert("Expected arrival time must be between start and end time.");
         return;
     }
 
@@ -114,11 +122,37 @@ function cfRenderStudentBookingList(bookings) {
             <p><strong>Room:</strong> ${booking.room}</p>
             <p><strong>Date:</strong> ${booking.date}</p>
             <p><strong>Time:</strong> ${booking.start_time} - ${booking.end_time} (${cfGetBookingDurationLabel(booking.start_time, booking.end_time)})</p>
+            <p><strong>Expected Arrival:</strong> ${booking.expected_arrival_time || "Not set"}</p>
             <p><strong>Purpose:</strong> ${booking.purpose}</p>
             <p><strong>Status:</strong> ${booking.status}</p>
+            <p><strong>Arrival:</strong> ${booking.has_arrived ? "Arrived" : "Not Marked"}</p>
+            ${booking.safety_alert_message ? `<p class="cf-arrival-alert">${booking.safety_alert_message}</p>` : ""}
+            ${
+                (booking.status || "").toLowerCase() !== "rejected" && !booking.has_arrived
+                    ? `<button class="cf-arrival-btn" onclick="cfMarkBookingArrived('${booking.id}')">Mark Arrived</button>`
+                    : ""
+            }
         `;
         container.appendChild(item);
     });
+}
+
+async function cfMarkBookingArrived(id) {
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/mark-arrived`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ id })
+        });
+        const data = await cfHandleApiResponse(response);
+        alert(data.message || "Arrival marked");
+        await cfFetchStudentBookings();
+    } catch (error) {
+        alert(error.message || "Unable to mark arrival");
+    }
 }
 
 function cfUpdateStudentSummary(bookings) {
@@ -333,6 +367,97 @@ async function cfSubmitFoodReview(event) {
     }
 }
 
+function cfRenderCommuteEntries(entries) {
+    const container = document.getElementById("cf-commute-list-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!entries.length) {
+        container.innerHTML = "<p class='cf-empty-message'>No commute entries yet.</p>";
+        return;
+    }
+
+    entries.forEach((entry) => {
+        const item = document.createElement("div");
+        item.className = "cf-booking-item";
+        item.innerHTML = `
+            <p><strong>Date:</strong> ${entry.date}</p>
+            <p><strong>Expected Arrival:</strong> ${entry.expected_arrival_time}</p>
+            <p><strong>Travel Mode:</strong> ${entry.travel_mode || "Not specified"}</p>
+            <p><strong>Notes:</strong> ${entry.notes || "-"}</p>
+            <p><strong>Arrival:</strong> ${entry.has_arrived ? "Arrived" : "Not Marked"}</p>
+            ${entry.alert_message ? `<p class="cf-arrival-alert">${entry.alert_message}</p>` : ""}
+            ${!entry.has_arrived ? `<button class="cf-arrival-btn" onclick="cfMarkCommuteArrived('${entry.id}')">Mark Arrived</button>` : ""}
+        `;
+        container.appendChild(item);
+    });
+}
+
+async function cfFetchCommuteEntries() {
+    const container = document.getElementById("cf-commute-list-container");
+    if (!container) return;
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/get-commute-entries`, {
+            method: "GET",
+            headers
+        });
+        const data = await cfHandleApiResponse(response);
+        cfCommuteState.entries = data.entries || [];
+        cfRenderCommuteEntries(cfCommuteState.entries);
+    } catch (error) {
+        container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+    }
+}
+
+async function cfSubmitCommuteEta(event) {
+    event.preventDefault();
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    const payload = {
+        date: document.getElementById("cf-commute-date")?.value || "",
+        expected_arrival_time: document.getElementById("cf-commute-eta")?.value || "",
+        travel_mode: document.getElementById("cf-commute-mode")?.value || "",
+        notes: (document.getElementById("cf-commute-notes")?.value || "").trim()
+    };
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/submit-commute-eta`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload)
+        });
+        const data = await cfHandleApiResponse(response);
+        alert(data.message || "Commute ETA submitted");
+        await cfFetchCommuteEntries();
+    } catch (error) {
+        alert(error.message || "Unable to submit commute ETA");
+    }
+}
+
+async function cfMarkCommuteArrived(id) {
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/mark-commute-arrived`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ id })
+        });
+        const data = await cfHandleApiResponse(response);
+        alert(data.message || "Commute arrival marked");
+        await cfFetchCommuteEntries();
+    } catch (error) {
+        alert(error.message || "Unable to mark commute arrival");
+    }
+}
+
 async function cfFetchStudentBookings() {
     const container = document.getElementById("cf-booking-list-container");
     if (!container) return;
@@ -368,6 +493,26 @@ async function cfFetchAdminBookings() {
         });
         const data = await cfHandleApiResponse(response);
         const bookings = data.bookings || [];
+        const alerts = data.safety_alerts || [];
+        const alertContainer = document.getElementById("cf-admin-alert-container");
+
+        if (alertContainer) {
+            alertContainer.innerHTML = "";
+            if (!alerts.length) {
+                alertContainer.innerHTML = "<p class='cf-empty-message'>No pending safety alerts.</p>";
+            } else {
+                alerts.forEach((alertItem) => {
+                    const alertRow = document.createElement("div");
+                    alertRow.className = "cf-safety-alert-item";
+                    alertRow.innerHTML = `
+                        <p><strong>Student:</strong> ${alertItem.user}</p>
+                        <p><strong>Room:</strong> ${alertItem.room} | <strong>Date:</strong> ${alertItem.date} | <strong>Expected Arrival:</strong> ${alertItem.expected_arrival_time}</p>
+                        <p><strong>Alert:</strong> ${alertItem.message}</p>
+                    `;
+                    alertContainer.appendChild(alertRow);
+                });
+            }
+        }
 
         container.innerHTML = "";
         if (!bookings.length) {
@@ -379,9 +524,14 @@ async function cfFetchAdminBookings() {
             const row = document.createElement("div");
             row.className = "cf-booking-item";
             row.dataset.status = (booking.status || "").toLowerCase();
+            if (booking.safety_alert) {
+                row.classList.add("cf-booking-alert");
+            }
             row.innerHTML = `
                 <p><strong>Room:</strong> ${booking.room} | <strong>Date:</strong> ${booking.date} | <strong>Time:</strong> ${booking.start_time} - ${booking.end_time}</p>
                 <p><strong>User:</strong> ${booking.user} | <strong>Purpose:</strong> ${booking.purpose} | <strong>Status:</strong> ${booking.status}</p>
+                <p><strong>Expected Arrival:</strong> ${booking.expected_arrival_time || "Not set"} | <strong>Arrival:</strong> ${booking.has_arrived ? "Arrived" : "Not Marked"}</p>
+                ${booking.safety_alert ? `<p class="cf-admin-alert-inline">${booking.safety_alert_message}</p>` : ""}
                 <button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>
                 <button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>
             `;
@@ -389,6 +539,45 @@ async function cfFetchAdminBookings() {
         });
     } catch (error) {
         container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+    }
+}
+
+async function cfFetchAdminCommuteAlerts() {
+    const alertContainer = document.getElementById("cf-admin-commute-alert-container");
+    if (!alertContainer) return;
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    alertContainer.innerHTML = "<p class='cf-empty-message'>Loading commute alerts...</p>";
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/get-admin-commute-alerts`, {
+            method: "GET",
+            headers
+        });
+        const data = await cfHandleApiResponse(response);
+        const alerts = data.alerts || [];
+
+        alertContainer.innerHTML = "";
+        if (!alerts.length) {
+            alertContainer.innerHTML = "<p class='cf-empty-message'>No pending commute alerts.</p>";
+            return;
+        }
+
+        alerts.forEach((entry) => {
+            const row = document.createElement("div");
+            row.className = "cf-safety-alert-item";
+            row.innerHTML = `
+                <p><strong>Student:</strong> ${entry.user}</p>
+                <p><strong>Date:</strong> ${entry.date} | <strong>ETA:</strong> ${entry.expected_arrival_time}</p>
+                <p><strong>Mode:</strong> ${entry.travel_mode || "Not specified"}</p>
+                <p><strong>Alert:</strong> ${entry.alert_message}</p>
+            `;
+            alertContainer.appendChild(row);
+        });
+    } catch (error) {
+        alertContainer.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
     }
 }
 
@@ -403,6 +592,7 @@ async function cfUpdateBookingStatus(id, endpoint) {
     });
     await cfHandleApiResponse(response);
     await cfFetchAdminBookings();
+    await cfFetchAdminCommuteAlerts();
 }
 
 async function cfApproveBooking(id) {
@@ -426,10 +616,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const isProtectedPage =
         !!document.getElementById("cf-booking-form") ||
         !!document.getElementById("cf-food-review-form") ||
+        !!document.getElementById("cf-commute-form") ||
         !!document.getElementById("cf-admin-booking-container") ||
         !!document.getElementById("cf-student-home") ||
         !!document.getElementById("cf-room-booking-page") ||
-        !!document.getElementById("cf-food-review-page");
+        !!document.getElementById("cf-food-review-page") ||
+        !!document.getElementById("cf-commute-page");
     if (isProtectedPage && !token) {
         window.location.href = "index.html";
         return;
@@ -459,7 +651,18 @@ document.addEventListener("DOMContentLoaded", () => {
         cfFetchFoodReviewSummary();
     }
 
+    const commuteForm = document.getElementById("cf-commute-form");
+    if (commuteForm) {
+        const dateInput = document.getElementById("cf-commute-date");
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split("T")[0];
+        }
+        commuteForm.addEventListener("submit", cfSubmitCommuteEta);
+        cfFetchCommuteEntries();
+    }
+
     if (document.getElementById("cf-admin-booking-container")) {
         cfFetchAdminBookings();
+        cfFetchAdminCommuteAlerts();
     }
 });

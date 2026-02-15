@@ -145,6 +145,15 @@ body {
     background-color: rgba(16, 185, 129, 0.13);
 }
 
+.cf-option-commute {
+    background: linear-gradient(180deg, #fff8f5, #fff1eb);
+}
+
+.cf-option-commute span {
+    color: #c2410c;
+    background-color: rgba(249, 115, 22, 0.16);
+}
+
 .cf-option-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
@@ -215,6 +224,17 @@ body {
 
 /* ----------- FULL-WIDTH INPUTS ----------- */
 #cf-input-room {
+    grid-column: span 2;
+}
+
+.cf-booking-label {
+    grid-column: span 2;
+    font-size: 0.84rem;
+    color: var(--text-light);
+    margin-top: -4px;
+}
+
+#cf-input-purpose {
     grid-column: span 2;
 }
 
@@ -352,6 +372,33 @@ body {
     background: linear-gradient(180deg, #0f766e, #115e59);
 }
 
+/* ----------- COMMUTE TRACKER ----------- */
+.cf-commute-section {
+    background: linear-gradient(180deg, #fff8f5, #fffaf7);
+}
+
+.cf-commute-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.cf-commute-form input,
+.cf-commute-form select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid #cbd5e1;
+    font-size: 0.92rem;
+    font-family: inherit;
+    background-color: #ffffff;
+}
+
+.cf-commute-form button {
+    grid-column: span 2;
+    background: linear-gradient(180deg, #ea580c, #c2410c);
+}
+
 /* ----------- FOOD SUMMARY ----------- */
 .cf-food-summary-controls {
     display: grid;
@@ -476,6 +523,27 @@ body {
     color: var(--text-dark);
 }
 
+.cf-arrival-alert {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.cf-arrival-btn {
+    margin-top: 8px;
+    width: auto;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #0f766e;
+    color: #ffffff;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.cf-arrival-btn:hover {
+    background-color: #115e59;
+}
+
 /* ----------- EMPTY STATE ----------- */
 .cf-empty-message {
     text-align: center;
@@ -515,6 +583,10 @@ button[onclick="cfHandleLogout()"]:hover {
         grid-column: span 1;
     }
 
+    .cf-booking-label {
+        grid-column: span 1;
+    }
+
     .cf-container {
         width: 95%;
     }
@@ -545,6 +617,14 @@ button[onclick="cfHandleLogout()"]:hover {
 
     #cf-food-comment,
     .cf-food-form button {
+        grid-column: span 1;
+    }
+
+    .cf-commute-form {
+        grid-template-columns: 1fr;
+    }
+
+    .cf-commute-form button {
         grid-column: span 1;
     }
 
@@ -876,6 +956,10 @@ body.cf-dark .cf-section-header p {
     color: #94a3b8;
 }
 
+body.cf-dark .cf-booking-label {
+    color: #94a3b8;
+}
+
 body.cf-dark .cf-option-card {
     border-color: #334155;
 }
@@ -894,6 +978,10 @@ body.cf-dark .cf-option-room {
 
 body.cf-dark .cf-option-food {
     background: linear-gradient(180deg, #0b1a16, #0f172a);
+}
+
+body.cf-dark .cf-option-commute {
+    background: linear-gradient(180deg, #2a1208, #1f1110);
 }
 
 body.cf-dark .cf-nav-link {
@@ -971,6 +1059,13 @@ body.cf-dark .cf-food-form textarea {
     border-color: #334155;
 }
 
+body.cf-dark .cf-commute-form select,
+body.cf-dark .cf-commute-form input {
+    background-color: #0f172a;
+    color: #e2e8f0;
+    border-color: #334155;
+}
+
 body.cf-dark .cf-food-summary-item {
     background: linear-gradient(180deg, #0b1220, #111827);
     border-color: #1e293b;
@@ -990,6 +1085,10 @@ body.cf-dark .cf-food-comments li {
 
 body.cf-dark .cf-food-meter {
     background-color: #1e293b;
+}
+
+body.cf-dark .cf-arrival-alert {
+    color: #fca5a5;
 }
 
 /* ----------- DARK LOGOUT ----------- */

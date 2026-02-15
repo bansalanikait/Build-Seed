@@ -3,6 +3,7 @@ from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import re
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -59,6 +60,53 @@ def is_valid_week_format(week):
     return 1 <= week_number <= 53
 
 
+def parse_datetime_parts(date_value, time_value):
+    try:
+        return datetime.strptime(f"{date_value} {time_value}", "%Y-%m-%d %H:%M")
+    except Exception:
+        return None
+
+
+def get_safety_alert_message(booking_data):
+    if (booking_data.get("status") or "").lower() == "rejected":
+        return ""
+    if bool(booking_data.get("has_arrived")):
+        return ""
+
+    date_value = booking_data.get("date", "")
+    expected_arrival_time = booking_data.get("expected_arrival_time", "")
+    if not date_value or not expected_arrival_time:
+        return ""
+
+    expected_dt = parse_datetime_parts(date_value, expected_arrival_time)
+    if not expected_dt:
+        return ""
+
+    if datetime.now() <= expected_dt:
+        return ""
+
+    return "Student has not marked arrival after expected time."
+
+
+def get_commute_alert_message(commute_data):
+    if bool(commute_data.get("has_arrived")):
+        return ""
+
+    commute_date = commute_data.get("date", "")
+    expected_arrival_time = commute_data.get("expected_arrival_time", "")
+    if not commute_date or not expected_arrival_time:
+        return ""
+
+    expected_dt = parse_datetime_parts(commute_date, expected_arrival_time)
+    if not expected_dt:
+        return ""
+
+    if datetime.now() <= expected_dt:
+        return ""
+
+    return "Student has not reached institute by expected commute ETA."
+
+
 @app.route("/api/create-booking", methods=["POST"])
 def create_booking():
     user = verify_token(request)
@@ -66,7 +114,7 @@ def create_booking():
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json(silent=True) or {}
-    required_fields = ["room", "date", "start_time", "end_time", "purpose"]
+    required_fields = ["room", "date", "start_time", "end_time", "expected_arrival_time", "purpose"]
     missing = [field for field in required_fields if not data.get(field)]
     if missing:
         return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
@@ -75,8 +123,12 @@ def create_booking():
     date = data["date"]
     start_time = data["start_time"]
     end_time = data["end_time"]
+    expected_arrival_time = data["expected_arrival_time"]
     purpose = data["purpose"]
     user_email = user.get("email", "")
+
+    if start_time > expected_arrival_time or expected_arrival_time > end_time:
+        return jsonify({"error": "Expected arrival time must be between start and end time."}), 400
 
     if has_conflict(room, date, start_time, end_time):
         return jsonify({"status": "conflict", "message": "Room already booked"}), 400
@@ -88,9 +140,12 @@ def create_booking():
             "date": date,
             "start_time": start_time,
             "end_time": end_time,
+            "expected_arrival_time": expected_arrival_time,
             "purpose": purpose,
             "user": user_email,
             "status": "Pending",
+            "has_arrived": False,
+            "arrival_marked_at": None,
         }
     )
 
@@ -171,6 +226,151 @@ def submit_food_review():
     doc_ref.set(payload)
 
     return jsonify({"status": "success", "message": "Food review submitted", "review_id": doc_ref.id})
+
+
+@app.route("/api/submit-commute-eta", methods=["POST"])
+def submit_commute_eta():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    required_fields = ["date", "expected_arrival_time"]
+    missing = [field for field in required_fields if not data.get(field)]
+    if missing:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+
+    date_value = str(data.get("date", "")).strip()
+    expected_arrival_time = str(data.get("expected_arrival_time", "")).strip()
+    travel_mode = str(data.get("travel_mode", "")).strip()
+    notes = str(data.get("notes", "")).strip()
+    user_email = user.get("email", "")
+
+    if parse_datetime_parts(date_value, expected_arrival_time) is None:
+        return jsonify({"error": "Invalid date or expected arrival time."}), 400
+
+    existing = (
+        db.collection("commute_eta")
+        .where("user", "==", user_email)
+        .where("date", "==", date_value)
+        .limit(1)
+        .stream()
+    )
+    existing_doc = next(existing, None)
+
+    payload = {
+        "user": user_email,
+        "date": date_value,
+        "expected_arrival_time": expected_arrival_time,
+        "travel_mode": travel_mode,
+        "notes": notes,
+        "has_arrived": False,
+        "arrival_marked_at": None,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    }
+
+    if existing_doc:
+        existing_data = existing_doc.to_dict() or {}
+        if bool(existing_data.get("has_arrived")):
+            payload["has_arrived"] = True
+            payload["arrival_marked_at"] = existing_data.get("arrival_marked_at")
+        db.collection("commute_eta").document(existing_doc.id).update(payload)
+        return jsonify({"status": "success", "message": "Commute ETA updated", "id": existing_doc.id})
+
+    doc_ref = db.collection("commute_eta").document()
+    payload["created_at"] = firestore.SERVER_TIMESTAMP
+    doc_ref.set(payload)
+    return jsonify({"status": "success", "message": "Commute ETA submitted", "id": doc_ref.id})
+
+
+@app.route("/api/get-commute-entries", methods=["GET"])
+def get_commute_entries():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_email = user.get("email", "")
+    docs = db.collection("commute_eta").where("user", "==", user_email).stream()
+
+    entries = []
+    for doc in docs:
+        data = doc.to_dict() or {}
+        entries.append(
+            {
+                "id": doc.id,
+                "date": data.get("date", ""),
+                "expected_arrival_time": data.get("expected_arrival_time", ""),
+                "travel_mode": data.get("travel_mode", ""),
+                "notes": data.get("notes", ""),
+                "has_arrived": bool(data.get("has_arrived")),
+                "alert_message": get_commute_alert_message(data),
+            }
+        )
+
+    entries.sort(key=lambda e: (e["date"], e["expected_arrival_time"]), reverse=True)
+    return jsonify({"status": "success", "entries": entries})
+
+
+@app.route("/api/mark-commute-arrived", methods=["POST"])
+def mark_commute_arrived():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    entry_id = data.get("id")
+    if not entry_id:
+        return jsonify({"error": "Missing required field: id"}), 400
+
+    doc_ref = db.collection("commute_eta").document(entry_id)
+    snapshot = doc_ref.get()
+    if not snapshot.exists:
+        return jsonify({"error": "Commute entry not found"}), 404
+
+    entry = snapshot.to_dict() or {}
+    user_email = user.get("email", "")
+    is_owner = entry.get("user", "") == user_email
+    if not (is_owner or is_admin_user(user)):
+        return jsonify({"error": "Forbidden"}), 403
+
+    doc_ref.update({"has_arrived": True, "arrival_marked_at": firestore.SERVER_TIMESTAMP})
+    return jsonify({"status": "success", "message": "Commute arrival marked successfully"})
+
+
+@app.route("/api/get-admin-commute-alerts", methods=["GET"])
+def get_admin_commute_alerts():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if not is_admin_user(user):
+        return jsonify({"error": "Forbidden"}), 403
+
+    docs = db.collection("commute_eta").stream()
+
+    alerts = []
+    entries = []
+    for doc in docs:
+        data = doc.to_dict() or {}
+        alert_message = get_commute_alert_message(data)
+        is_alert = bool(alert_message)
+        item = {
+            "id": doc.id,
+            "user": data.get("user", ""),
+            "date": data.get("date", ""),
+            "expected_arrival_time": data.get("expected_arrival_time", ""),
+            "travel_mode": data.get("travel_mode", ""),
+            "notes": data.get("notes", ""),
+            "has_arrived": bool(data.get("has_arrived")),
+            "alert_message": alert_message,
+            "is_alert": is_alert,
+        }
+        entries.append(item)
+        if is_alert:
+            alerts.append(item)
+
+    entries.sort(key=lambda e: (e["date"], e["expected_arrival_time"]), reverse=True)
+    alerts.sort(key=lambda e: (e["date"], e["expected_arrival_time"]))
+    return jsonify({"status": "success", "alerts": alerts, "entries": entries})
 
 
 @app.route("/api/get-food-review-summary", methods=["GET"])
@@ -254,8 +454,11 @@ def get_bookings():
                 "date": data.get("date", ""),
                 "start_time": data.get("start_time", ""),
                 "end_time": data.get("end_time", ""),
+                "expected_arrival_time": data.get("expected_arrival_time", ""),
                 "purpose": data.get("purpose", ""),
                 "status": data.get("status", "Pending"),
+                "has_arrived": bool(data.get("has_arrived")),
+                "safety_alert_message": get_safety_alert_message(data),
             }
         )
 
@@ -273,8 +476,23 @@ def get_all_bookings():
 
     docs = db.collection("bookings").stream()
     booking_list = []
+    safety_alerts = []
     for doc in docs:
         data = doc.to_dict()
+        safety_alert_message = get_safety_alert_message(data)
+        safety_alert = bool(safety_alert_message)
+        if safety_alert:
+            safety_alerts.append(
+                {
+                    "booking_id": doc.id,
+                    "user": data.get("user", ""),
+                    "room": data.get("room", ""),
+                    "date": data.get("date", ""),
+                    "expected_arrival_time": data.get("expected_arrival_time", ""),
+                    "message": safety_alert_message,
+                }
+            )
+
         booking_list.append(
             {
                 "id": doc.id,
@@ -282,14 +500,48 @@ def get_all_bookings():
                 "date": data.get("date", ""),
                 "start_time": data.get("start_time", ""),
                 "end_time": data.get("end_time", ""),
+                "expected_arrival_time": data.get("expected_arrival_time", ""),
                 "purpose": data.get("purpose", ""),
                 "user": data.get("user", ""),
                 "status": data.get("status", "Pending"),
+                "has_arrived": bool(data.get("has_arrived")),
+                "safety_alert": safety_alert,
+                "safety_alert_message": safety_alert_message,
             }
         )
 
     booking_list.sort(key=lambda b: (b["date"], b["start_time"]))
-    return jsonify({"status": "success", "bookings": booking_list})
+    safety_alerts.sort(key=lambda a: (a["date"], a["expected_arrival_time"]))
+    return jsonify({"status": "success", "bookings": booking_list, "safety_alerts": safety_alerts})
+
+
+@app.route("/api/mark-arrived", methods=["POST"])
+def mark_arrived():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    booking_id = data.get("id")
+    if not booking_id:
+        return jsonify({"error": "Missing required field: id"}), 400
+
+    doc_ref = db.collection("bookings").document(booking_id)
+    snapshot = doc_ref.get()
+    if not snapshot.exists:
+        return jsonify({"error": "Booking not found"}), 404
+
+    booking = snapshot.to_dict() or {}
+    user_email = user.get("email", "")
+    is_owner = booking.get("user", "") == user_email
+    if not (is_owner or is_admin_user(user)):
+        return jsonify({"error": "Forbidden"}), 403
+
+    if (booking.get("status") or "").lower() == "rejected":
+        return jsonify({"error": "Arrival cannot be marked for rejected bookings."}), 400
+
+    doc_ref.update({"has_arrived": True, "arrival_marked_at": firestore.SERVER_TIMESTAMP})
+    return jsonify({"status": "success", "message": "Arrival marked successfully"})
 
 
 def update_booking_status(new_status):
@@ -320,6 +572,5 @@ def reject_booking():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
 
 
