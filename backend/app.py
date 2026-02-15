@@ -107,6 +107,18 @@ def get_commute_alert_message(commute_data):
     return "Student has not reached institute by expected commute ETA."
 
 
+def serialize_current_affair(doc):
+    data = doc.to_dict() or {}
+    return {
+        "id": doc.id,
+        "title": data.get("title", ""),
+        "content": data.get("content", ""),
+        "category": data.get("category", ""),
+        "event_date": data.get("event_date", ""),
+        "created_by": data.get("created_by", ""),
+    }
+
+
 @app.route("/api/create-booking", methods=["POST"])
 def create_booking():
     user = verify_token(request)
@@ -435,6 +447,115 @@ def get_food_review_summary():
     return jsonify({"status": "success", "week": week, "hostels": summary})
 
 
+@app.route("/api/current-affairs", methods=["GET"])
+def get_current_affairs():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    docs = db.collection("current_affairs").stream()
+    items = [serialize_current_affair(doc) for doc in docs]
+    items.sort(key=lambda x: (x["event_date"], x["id"]), reverse=True)
+    return jsonify({"status": "success", "items": items})
+
+
+@app.route("/api/admin/current-affairs", methods=["POST"])
+def create_current_affair():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if not is_admin_user(user):
+        return jsonify({"error": "Forbidden"}), 403
+
+    data = request.get_json(silent=True) or {}
+    required_fields = ["title", "content", "event_date"]
+    missing = [field for field in required_fields if not data.get(field)]
+    if missing:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+
+    title = str(data.get("title", "")).strip()
+    content = str(data.get("content", "")).strip()
+    category = str(data.get("category", "")).strip()
+    event_date = str(data.get("event_date", "")).strip()
+
+    try:
+        datetime.strptime(event_date, "%Y-%m-%d")
+    except Exception:
+        return jsonify({"error": "Invalid event date. Use YYYY-MM-DD."}), 400
+
+    doc_ref = db.collection("current_affairs").document()
+    doc_ref.set(
+        {
+            "title": title,
+            "content": content,
+            "category": category,
+            "event_date": event_date,
+            "created_by": user.get("email", ""),
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+    )
+    return jsonify({"status": "success", "message": "Current affair added", "id": doc_ref.id})
+
+
+@app.route("/api/admin/current-affairs/<affair_id>", methods=["PUT"])
+def update_current_affair(affair_id):
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if not is_admin_user(user):
+        return jsonify({"error": "Forbidden"}), 403
+
+    data = request.get_json(silent=True) or {}
+    required_fields = ["title", "content", "event_date"]
+    missing = [field for field in required_fields if not data.get(field)]
+    if missing:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+
+    title = str(data.get("title", "")).strip()
+    content = str(data.get("content", "")).strip()
+    category = str(data.get("category", "")).strip()
+    event_date = str(data.get("event_date", "")).strip()
+
+    try:
+        datetime.strptime(event_date, "%Y-%m-%d")
+    except Exception:
+        return jsonify({"error": "Invalid event date. Use YYYY-MM-DD."}), 400
+
+    doc_ref = db.collection("current_affairs").document(affair_id)
+    snapshot = doc_ref.get()
+    if not snapshot.exists:
+        return jsonify({"error": "Current affair not found"}), 404
+
+    doc_ref.update(
+        {
+            "title": title,
+            "content": content,
+            "category": category,
+            "event_date": event_date,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+    )
+    return jsonify({"status": "success", "message": "Current affair updated"})
+
+
+@app.route("/api/admin/current-affairs/<affair_id>", methods=["DELETE"])
+def delete_current_affair(affair_id):
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if not is_admin_user(user):
+        return jsonify({"error": "Forbidden"}), 403
+
+    doc_ref = db.collection("current_affairs").document(affair_id)
+    snapshot = doc_ref.get()
+    if not snapshot.exists:
+        return jsonify({"error": "Current affair not found"}), 404
+
+    doc_ref.delete()
+    return jsonify({"status": "success", "message": "Current affair deleted"})
+
+
 @app.route("/api/get-bookings", methods=["GET"])
 def get_bookings():
     user = verify_token(request)
@@ -572,5 +693,4 @@ def reject_booking():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
 
