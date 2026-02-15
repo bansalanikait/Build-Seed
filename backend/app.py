@@ -20,6 +20,21 @@ def home():
     return "Backend Running Successfully!"
 
 
+@app.route("/api/me", methods=["GET"])
+def get_me():
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    return jsonify(
+        {
+            "status": "success",
+            "email": user.get("email", ""),
+            "is_admin": is_admin_user(user),
+        }
+    )
+
+
 def verify_token(req):
     auth_header = req.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):

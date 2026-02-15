@@ -1,6 +1,7 @@
 /*************************************************
     CampusFlow Firebase Authentication
 *************************************************/
+const CF_API_BASE = "https://build-seed.onrender.com";
 
 const cfElTabLogin = document.getElementById("cf-tab-login");
 const cfElTabSignup = document.getElementById("cf-tab-signup");
@@ -28,10 +29,35 @@ async function cfHandlePostAuthRedirect(email) {
     const token = await currentUser.getIdToken();
     localStorage.setItem("cfFirebaseIdToken", token);
 
-    if ((email || "").toLowerCase().includes("admin")) {
+    const isAdmin = await cfResolveIsAdmin(token);
+    if (isAdmin) {
         window.location.href = "admin.html";
     } else {
         window.location.href = "student.html";
+    }
+}
+
+async function cfResolveIsAdmin(token) {
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/me`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return Boolean(data.is_admin);
+        }
+    } catch (error) {
+        // Fall through to local claim fallback if backend check is unavailable.
+    }
+
+    try {
+        const tokenResult = await cfFirebaseAuth.currentUser?.getIdTokenResult();
+        return Boolean(tokenResult?.claims?.admin);
+    } catch (error) {
+        return false;
     }
 }
 
