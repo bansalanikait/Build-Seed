@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CampusFlow - Food Review</title>
+    <link rel="stylesheet" href="css/style_student.css">
+</head>
+<body class="cf-app-body">
+
+    <div class="cf-app-shell" id="cf-food-review-page">
+        <aside class="cf-app-sidebar">
+            <div class="cf-app-brand">
+                <div class="cf-app-logo">CF</div>
+                <div>
+                    <h1>CampusFlow</h1>
+                    <p>NITJ Student</p>
+                </div>
+            </div>
+
+            <nav class="cf-app-nav">
+                <a href="student.html">Dashboard</a>
+                <a href="academic_discovery.html">Academic Discovery</a>
+                <a href="room_booking.html">Room Booking</a>
+                <a class="active" href="food_review.html">Food Review</a>
+                <a href="commute_tracker.html">Safe Arrival</a>
+            </nav>
+
+            <button class="cf-side-logout" onclick="cfHandleLogout()">Logout</button>
+        </aside>
+
+        <main class="cf-app-main">
+            <header class="cf-app-header">
+                <h2>Food Review</h2>
+                <p>Rate weekly hostel meals and compare performance across hostels.</p>
+            </header>
+
+            <section class="cf-app-canvas">
+                <section class="cf-dashboard-section cf-food-section">
+                    <div class="cf-section-header">
+                        <h3>Food Review</h3>
+                        <p>Rate weekly mess quality for each hostel and compare trends.</p>
+                    </div>
+
+                    <div class="cf-card">
+                        <h3>Weekly Hostel Food Review</h3>
+                        <form id="cf-food-review-form" class="cf-food-form">
+                            <select id="cf-food-hostel" required>
+                                <option value="">Select Hostel</option>
+                                <option value="Boys Hostel 1">Boys Hostel 1</option>
+                                <option value="Boys Hostel 2">Boys Hostel 2</option>
+                                <option value="Boys Hostel 3">Boys Hostel 3</option>
+                                <option value="Girls Hostel 1">Girls Hostel 1</option>
+                                <option value="Girls Hostel 2">Girls Hostel 2</option>
+                            </select>
+                            <input type="week" id="cf-food-review-week" required>
+                            <select id="cf-food-rating-taste" required>
+                                <option value="">Taste Rating (1-5)</option>
+                                <option value="1">1 - Poor</option>
+                                <option value="2">2 - Fair</option>
+                                <option value="3">3 - Good</option>
+                                <option value="4">4 - Very Good</option>
+                                <option value="5">5 - Excellent</option>
+                            </select>
+                            <select id="cf-food-rating-hygiene" required>
+                                <option value="">Hygiene Rating (1-5)</option>
+                                <option value="1">1 - Poor</option>
+                                <option value="2">2 - Fair</option>
+                                <option value="3">3 - Good</option>
+                                <option value="4">4 - Very Good</option>
+                                <option value="5">5 - Excellent</option>
+                            </select>
+                            <select id="cf-food-rating-variety" required>
+                                <option value="">Variety Rating (1-5)</option>
+                                <option value="1">1 - Poor</option>
+                                <option value="2">2 - Fair</option>
+                                <option value="3">3 - Good</option>
+                                <option value="4">4 - Very Good</option>
+                                <option value="5">5 - Excellent</option>
+                            </select>
+                            <textarea id="cf-food-comment" placeholder="Optional comment about meals this week"></textarea>
+                            <button type="submit">Submit Food Review</button>
+                        </form>
+                    </div>
+
+                    <div class="cf-card">
+                        <h3>Hostel Food Ratings by Week</h3>
+                        <div class="cf-food-summary-controls">
+                            <input type="week" id="cf-food-summary-week">
+                            <button type="button" id="cf-food-refresh-btn">Refresh</button>
+                        </div>
+                        <div id="cf-food-summary-container"></div>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+
+</body>
+</html>

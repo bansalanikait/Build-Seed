@@ -1,0 +1,776 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+:root {
+    --cf-bg: #f4f8f7;
+    --cf-surface: #ffffff;
+    --cf-text: #132423;
+    --cf-muted: #5b7070;
+    --cf-primary: #0b6d67;
+    --cf-primary-strong: #075752;
+    --cf-accent: #f2b544;
+    --cf-border: #d9e3e3;
+    --cf-danger: #b42318;
+    --cf-danger-strong: #8e1b12;
+    --cf-shadow: 0 18px 42px rgba(19, 36, 35, 0.12);
+    --cf-radius-lg: 20px;
+    --cf-radius-md: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--cf-text);
+    background:
+        radial-gradient(circle at 0% 0%, #d5ece9 0%, rgba(213, 236, 233, 0) 45%),
+        radial-gradient(circle at 100% 100%, #f7e4c1 0%, rgba(247, 228, 193, 0) 42%),
+        var(--cf-bg);
+    font-family: "Manrope", "Segoe UI", sans-serif;
+}
+
+.cf-card {
+    background: var(--cf-surface);
+    border: 1px solid var(--cf-border);
+    border-radius: var(--cf-radius-lg);
+    box-shadow: var(--cf-shadow);
+    padding: 24px;
+}
+
+h1,
+h2,
+h3,
+p {
+    margin: 0;
+}
+
+/* Auth page redesign */
+.cf-page-auth {
+    padding: 16px;
+}
+
+.cf-auth-shell {
+    width: min(1300px, 100%);
+    margin: 0 auto;
+    min-height: calc(100vh - 32px);
+    border: 1px solid #d6d9e0;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #f7f8fb;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    box-shadow: 0 20px 40px rgba(17, 24, 39, 0.16);
+}
+
+.cf-auth-sidebar {
+    background: linear-gradient(180deg, #f2f4f9, #eef1f7);
+    border-right: 1px solid #d9dde6;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.cf-auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e6ee;
+}
+
+.cf-auth-brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    font-weight: 800;
+    background: linear-gradient(145deg, #5b4af6, #4138c6);
+}
+
+.cf-auth-brand h1 {
+    font-size: 1.15rem;
+}
+
+.cf-auth-brand p {
+    color: #6b7280;
+    font-size: 0.82rem;
+    margin-top: 2px;
+}
+
+.cf-auth-nav {
+    display: grid;
+    gap: 6px;
+}
+
+.cf-auth-nav a {
+    text-decoration: none;
+    color: #334155;
+    padding: 10px 11px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.94rem;
+}
+
+.cf-auth-nav a.active,
+.cf-auth-nav a:hover {
+    color: #4338ca;
+    background: #ebe9ff;
+}
+
+.cf-auth-sidebar-foot {
+    margin-top: auto;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #d7dcfa;
+    background: linear-gradient(180deg, #f0efff, #e9e7ff);
+}
+
+.cf-auth-sidebar-foot p {
+    color: #4c1d95;
+    font-size: 0.85rem;
+}
+
+.cf-auth-main {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.cf-auth-main-header {
+    border-bottom: 1px solid #dde2ea;
+    background: #f9fafc;
+    padding: 28px 30px 20px;
+}
+
+.cf-auth-main-header h2 {
+    font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+    color: #111827;
+}
+
+.cf-auth-main-header p {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.cf-auth-card-v2 {
+    margin: 24px 30px;
+    max-width: 540px;
+    background: #ffffff;
+    border: 1px solid #dfe5ef;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.09);
+}
+
+.cf-auth-tabs {
+    display: inline-flex;
+    border: 1px solid #d9dff0;
+    border-radius: 999px;
+    padding: 3px;
+    margin-bottom: 14px;
+    background: #f8f9fc;
+}
+
+.cf-auth-tab {
+    width: auto;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    background: transparent;
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cf-auth-tab.active {
+    color: #ffffff;
+    background: linear-gradient(180deg, #5747f5, #4435ca);
+}
+
+.cf-auth-panel-v2 {
+    display: none;
+}
+
+.cf-auth-panel-v2.active {
+    display: block;
+}
+
+form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+input {
+    width: 100%;
+    padding: 12px 13px;
+    border: 1px solid #c7d7d7;
+    border-radius: var(--cf-radius-md);
+    background: #fbfefe;
+    color: var(--cf-text);
+    font: inherit;
+    margin-bottom: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--cf-primary);
+    box-shadow: 0 0 0 4px rgba(11, 109, 103, 0.14);
+}
+
+button {
+    width: 100%;
+    border: 0;
+    border-radius: var(--cf-radius-md);
+    background: linear-gradient(180deg, #0d7b74 0%, #0b6d67 100%);
+    color: #ffffff;
+    padding: 12px 15px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+}
+
+.cf-error-message {
+    color: var(--cf-danger);
+    margin-top: 12px;
+    min-height: 20px;
+    font-size: 0.92rem;
+}
+
+/* Admin page */
+.cf-page-admin {
+    padding: 26px;
+}
+
+.cf-topbar {
+    width: min(1100px, 100%);
+    margin: 0 auto 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.cf-topbar-kicker {
+    color: var(--cf-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.cf-topbar h1 {
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    margin-top: 2px;
+}
+
+.cf-container.cf-admin-container {
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    display: grid;
+    gap: 18px;
+}
+
+.cf-admin-intro p {
+    color: var(--cf-muted);
+    margin-top: 8px;
+}
+
+.cf-admin-toolbar {
+    margin-top: 12px;
+}
+
+#cf-admin-refresh-btn {
+    width: auto;
+    padding: 10px 14px;
+}
+
+.cf-admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.cf-admin-stat-card {
+    background: #ffffff;
+    border: 1px solid var(--cf-border);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 8px 20px rgba(19, 36, 35, 0.08);
+}
+
+.cf-admin-stat-card span {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--cf-muted);
+    margin-bottom: 4px;
+}
+
+.cf-admin-stat-card strong {
+    font-size: 1.4rem;
+    color: var(--cf-text);
+}
+
+.cf-card h3 {
+    margin-bottom: 14px;
+}
+
+.cf-current-affair-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.cf-current-affair-form input,
+.cf-current-affair-form textarea {
+    margin-bottom: 0;
+    width: 100%;
+    padding: 12px 13px;
+    border: 1px solid #c7d7d7;
+    border-radius: var(--cf-radius-md);
+    background: #fbfefe;
+    color: var(--cf-text);
+    font: inherit;
+}
+
+#cf-current-affair-content {
+    grid-column: span 3;
+    min-height: 90px;
+    resize: vertical;
+}
+
+#cf-current-affair-submit-btn {
+    width: auto;
+}
+
+#cf-current-affair-cancel-btn {
+    width: auto;
+}
+
+#cf-admin-current-affairs-container {
+    display: grid;
+    gap: 10px;
+}
+
+.cf-current-affair-item {
+    border: 1px solid var(--cf-border);
+    border-radius: 12px;
+    padding: 12px;
+    background: #fbfefe;
+}
+
+.cf-current-affair-meta {
+    color: var(--cf-muted);
+    font-size: 0.84rem;
+    margin-bottom: 6px;
+}
+
+.cf-current-affair-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+#cf-admin-booking-container {
+    display: grid;
+    gap: 12px;
+}
+
+#cf-admin-alert-container {
+    display: grid;
+    gap: 10px;
+}
+
+#cf-admin-commute-alert-container {
+    display: grid;
+    gap: 10px;
+}
+
+.cf-safety-alert-item {
+    border: 1px solid #fecaca;
+    border-left: 6px solid #dc2626;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fef2f2;
+}
+
+.cf-safety-alert-item p {
+    color: #7f1d1d;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.cf-booking-item {
+    border: 1px solid var(--cf-border);
+    border-radius: 14px;
+    padding: 14px;
+    background: #fcfefe;
+}
+
+.cf-booking-item.cf-booking-alert {
+    border-color: #fca5a5;
+    background: #fff7f7;
+}
+
+.cf-booking-item p {
+    color: #2d4646;
+    margin-bottom: 7px;
+    font-size: 0.95rem;
+}
+
+.cf-admin-action {
+    width: auto;
+    margin-right: 8px;
+    margin-top: 6px;
+    padding: 9px 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    border-radius: 10px;
+}
+
+.cf-admin-action,
+.cf-logout-btn,
+#cf-admin-refresh-btn {
+    transition: background 0.2s ease;
+}
+
+.cf-admin-action:hover,
+.cf-logout-btn:hover,
+#cf-admin-refresh-btn:hover {
+    transform: none;
+    filter: none;
+}
+
+.cf-admin-action.approve {
+    background: #15803d;
+}
+
+.cf-admin-action.reject {
+    background: #b42318;
+}
+
+.cf-admin-action.reject:hover {
+    background: var(--cf-danger-strong);
+}
+
+.cf-booking-item[data-status="approved"] {
+    border-left: 6px solid #15803d;
+}
+
+.cf-booking-item[data-status="pending"] {
+    border-left: 6px solid var(--cf-accent);
+}
+
+.cf-booking-item[data-status="rejected"] {
+    border-left: 6px solid #b42318;
+}
+
+.cf-admin-alert-inline {
+    color: #b42318;
+    font-weight: 700;
+}
+
+.cf-empty-message {
+    color: var(--cf-muted);
+    text-align: center;
+    margin: 8px 0;
+}
+
+.cf-logout-btn {
+    width: auto;
+    padding: 10px 16px;
+    background: var(--cf-danger);
+}
+
+.cf-logout-btn:hover {
+    background: var(--cf-danger-strong);
+}
+
+@media (max-width: 900px) {
+    .cf-auth-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .cf-auth-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid #d9dde6;
+    }
+
+    .cf-auth-main-header {
+        padding: 20px;
+    }
+
+    .cf-auth-card-v2 {
+        margin: 18px 20px;
+        max-width: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .cf-page-admin {
+        padding: 16px;
+    }
+
+    .cf-topbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .cf-logout-btn {
+        width: 100%;
+    }
+
+    .cf-card {
+        padding: 18px;
+    }
+
+    .cf-admin-stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cf-current-affair-form {
+        grid-template-columns: 1fr;
+    }
+
+    #cf-current-affair-content {
+        grid-column: span 1;
+    }
+}
+
+/* =========================================================
+   AUTH ONLY START PAGE
+   ========================================================= */
+
+body.cf-page-auth-plain {
+    padding: 24px;
+    display: grid;
+    place-items: center;
+}
+
+.cf-auth-plain-wrap {
+    width: min(980px, 100%);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.cf-auth-plain-hero {
+    background: linear-gradient(150deg, #10182f, #192a56 45%, #273a7a 100%);
+    border-radius: 18px;
+    padding: 32px;
+    color: #f8fbff;
+    box-shadow: 0 18px 40px rgba(16, 24, 47, 0.35);
+}
+
+.cf-auth-plain-hero span {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    margin-bottom: 14px;
+    color: #bfdbfe;
+}
+
+.cf-auth-plain-hero h1 {
+    font-size: clamp(1.8rem, 2.9vw, 2.4rem);
+    line-height: 1.2;
+}
+
+.cf-auth-plain-hero p {
+    margin-top: 10px;
+    max-width: 32ch;
+    color: #dbeafe;
+}
+
+body.cf-page-auth-plain .cf-auth-card-v2 {
+    margin: 0;
+    max-width: none;
+    align-self: center;
+}
+
+@media (max-width: 900px) {
+    .cf-auth-plain-wrap {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   ADMIN SHELL REDESIGN
+   ========================================================= */
+
+body.cf-page-admin-shell {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 0% 0%, #d9def8 0%, rgba(217, 222, 248, 0) 45%),
+        radial-gradient(circle at 100% 100%, #d7f2eb 0%, rgba(215, 242, 235, 0) 42%),
+        #eef2f7;
+}
+
+.cf-admin-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 270px 1fr;
+}
+
+.cf-admin-sidebar {
+    background: #f8f9fd;
+    border-right: 1px solid #d9deea;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cf-admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid #e2e7f2;
+    border-radius: 12px;
+}
+
+.cf-admin-brand-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    font-weight: 800;
+    background: linear-gradient(145deg, #5a4af6, #4237c8);
+}
+
+.cf-admin-brand h1 {
+    font-size: 1rem;
+    color: #111827;
+}
+
+.cf-admin-brand p {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.cf-admin-nav {
+    display: grid;
+    gap: 6px;
+}
+
+.cf-admin-nav a {
+    text-decoration: none;
+    color: #334155;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 11px;
+}
+
+.cf-admin-nav a:hover,
+.cf-admin-nav a.active {
+    color: #4338ca;
+    background: #ebe9ff;
+}
+
+.cf-admin-sidebar .cf-logout-btn {
+    margin-top: auto;
+    width: 100%;
+}
+
+.cf-admin-main {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.cf-admin-main-header {
+    background: #f7f9fc;
+    border-bottom: 1px solid #dce2ef;
+    padding: 24px 28px 18px;
+}
+
+.cf-admin-main-header h2 {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    color: #111827;
+}
+
+.cf-admin-main-header p {
+    margin-top: 6px;
+    color: #64748b;
+}
+
+.cf-admin-main-header #cf-admin-refresh-btn {
+    width: auto;
+    margin-top: 12px;
+}
+
+.cf-admin-main .cf-container.cf-admin-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 20px;
+    gap: 16px;
+}
+
+@media (max-width: 980px) {
+    .cf-admin-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .cf-admin-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid #d9deea;
+    }
+
+    .cf-admin-nav {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cf-admin-main-header {
+        padding: 18px;
+    }
+
+    .cf-admin-main .cf-container.cf-admin-container {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .cf-admin-nav {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   MOTION STABILITY
+   ========================================================= */
+
+body.cf-page-auth-plain button:hover,
+body.cf-page-admin-shell button:hover {
+    transform: none !important;
+    filter: none !important;
+}
+
+body.cf-page-admin-shell .cf-card,
+body.cf-page-auth-plain .cf-auth-card-v2 {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CampusFlow - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="cf-page-auth-plain">
+
+    <div class="cf-auth-plain-wrap">
+        <section class="cf-auth-plain-hero">
+            <span>CampusFlow</span>
+            <h1>NIT Jalandhar Student Services</h1>
+            <p>Sign in to access room booking, food review, safe arrival tracking, and current affairs.</p>
+        </section>
+
+        <section class="cf-auth-card-v2">
+            <div class="cf-auth-tabs">
+                <button type="button" id="cf-tab-login" class="cf-auth-tab active">Sign In</button>
+                <button type="button" id="cf-tab-signup" class="cf-auth-tab">Sign Up</button>
+            </div>
+
+            <div id="cf-login-panel" class="cf-auth-panel-v2 active">
+                <form id="cf-login-form">
+                    <label for="cf-input-email">Email</label>
+                    <input type="email" id="cf-input-email" placeholder="you@college.edu" required>
+
+                    <label for="cf-input-password">Password</label>
+                    <input type="password" id="cf-input-password" placeholder="Enter Password" required>
+
+                    <button type="submit">Login</button>
+                </form>
+                <p id="cf-login-error" class="cf-error-message"></p>
+            </div>
+
+            <div id="cf-signup-panel" class="cf-auth-panel-v2">
+                <form id="cf-signup-form">
+                    <label for="cf-signup-name">Full Name</label>
+                    <input type="text" id="cf-signup-name" placeholder="Your full name" required>
+
+                    <label for="cf-signup-email">Email</label>
+                    <input type="email" id="cf-signup-email" placeholder="you@college.edu" required>
+
+                    <label for="cf-signup-password">Password</label>
+                    <input type="password" id="cf-signup-password" placeholder="Create password (min 6 chars)" required>
+
+                    <label for="cf-signup-confirm-password">Confirm Password</label>
+                    <input type="password" id="cf-signup-confirm-password" placeholder="Re-enter password" required>
+
+                    <button type="submit">Create Account</button>
+                </form>
+                <p id="cf-signup-error" class="cf-error-message"></p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <!-- Your JS -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+
+
+</body>
+</html>
