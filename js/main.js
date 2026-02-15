@@ -396,6 +396,21 @@ function cfGetAuthHeaders() {
     };
 }
 
+async function cfApiFetch(url, options) {
+    try {
+        return await fetch(url, options);
+    } catch (error) {
+        const message = (error && error.message) ? String(error.message) : "";
+        if (message.toLowerCase().includes("failed to fetch")) {
+            throw new Error(
+                `Cannot reach backend at ${CF_API_BASE}. ` +
+                "Start backend server or set localStorage.cfApiBaseOverride to a working API URL."
+            );
+        }
+        throw error;
+    }
+}
+
 async function cfHandleApiResponse(response) {
     let data = {};
     try {
@@ -442,7 +457,7 @@ async function cfCreateBooking(event) {
     }
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/create-booking`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/create-booking`, {
             method: "POST",
             headers,
             body: JSON.stringify(payload)
@@ -517,7 +532,7 @@ async function cfMarkBookingArrived(id) {
     if (!headers) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/mark-arrived`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/mark-arrived`, {
             method: "POST",
             headers,
             body: JSON.stringify({ id })
@@ -697,7 +712,7 @@ async function cfFetchFoodReviewSummary() {
     container.innerHTML = "<p class='cf-empty-message'>Loading weekly food insights...</p>";
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/get-food-review-summary?week=${encodeURIComponent(week)}`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/get-food-review-summary?week=${encodeURIComponent(week)}`, {
             method: "GET",
             headers
         });
@@ -726,7 +741,7 @@ async function cfSubmitFoodReview(event) {
     };
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/submit-food-review`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/submit-food-review`, {
             method: "POST",
             headers,
             body: JSON.stringify(payload)
@@ -779,7 +794,7 @@ async function cfFetchCommuteEntries() {
     if (!headers) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/get-commute-entries`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/get-commute-entries`, {
             method: "GET",
             headers
         });
@@ -805,7 +820,7 @@ async function cfSubmitCommuteEta(event) {
     };
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/submit-commute-eta`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/submit-commute-eta`, {
             method: "POST",
             headers,
             body: JSON.stringify(payload)
@@ -1051,7 +1066,7 @@ async function cfFetchCurrentAffairs() {
     if (!headers) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/current-affairs`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/current-affairs`, {
             method: "GET",
             headers
         });
@@ -1105,7 +1120,7 @@ async function cfDeleteCurrentAffair(id) {
     if (!confirm("Delete this current affair update?")) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/admin/current-affairs/${id}`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/admin/current-affairs/${id}`, {
             method: "DELETE",
             headers
         });
@@ -1132,7 +1147,7 @@ async function cfSubmitCurrentAffair(event) {
     };
 
     try {
-        const response = await fetch(
+        const response = await cfApiFetch(
             id ? `${CF_API_BASE}/api/admin/current-affairs/${id}` : `${CF_API_BASE}/api/admin/current-affairs`,
             {
                 method: id ? "PUT" : "POST",
@@ -1154,7 +1169,7 @@ async function cfMarkCommuteArrived(id) {
     if (!headers) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/mark-commute-arrived`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/mark-commute-arrived`, {
             method: "POST",
             headers,
             body: JSON.stringify({ id })
@@ -1175,7 +1190,7 @@ async function cfFetchStudentBookings() {
     if (!headers) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/get-bookings`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/get-bookings`, {
             method: "GET",
             headers
         });
@@ -1196,7 +1211,7 @@ async function cfFetchAdminBookings() {
     if (!headers) return;
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/get-all-bookings`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/get-all-bookings`, {
             method: "GET",
             headers
         });
@@ -1276,7 +1291,7 @@ async function cfFetchAdminCommuteAlerts() {
     alertContainer.innerHTML = "<p class='cf-empty-message'>Loading commute alerts...</p>";
 
     try {
-        const response = await fetch(`${CF_API_BASE}/api/get-admin-commute-alerts`, {
+        const response = await cfApiFetch(`${CF_API_BASE}/api/get-admin-commute-alerts`, {
             method: "GET",
             headers
         });
@@ -1311,7 +1326,7 @@ async function cfUpdateBookingStatus(id, endpoint) {
     const headers = cfGetAuthHeaders();
     if (!headers) return;
 
-    const response = await fetch(`${CF_API_BASE}${endpoint}`, {
+    const response = await cfApiFetch(`${CF_API_BASE}${endpoint}`, {
         method: "POST",
         headers,
         body: JSON.stringify({ id })
