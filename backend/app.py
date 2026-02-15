@@ -732,6 +732,25 @@ def reject_booking():
     return update_booking_status("Rejected")
 
 
+@app.route("/api/me", methods=["GET"])
+def get_me():
+    backend_error = ensure_backend_ready()
+    if backend_error:
+        return backend_error
+
+    user = verify_token(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    return jsonify(
+        {
+            "status": "success",
+            "email": user.get("email", ""),
+            "is_admin": is_admin_user(user),
+        }
+    )
+
+
 import os
 
 if __name__ == "__main__":

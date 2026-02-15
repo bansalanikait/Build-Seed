@@ -3,6 +3,15 @@
 *************************************************/
 function cfResolveAuthApiBase() {
     const override = (localStorage.getItem("cfApiBaseOverride") || "").trim().replace(/\/+$/, "");
+    const isWebhookUrl = /api\.render\.com\/deploy/i.test(override);
+
+    // Allow explicit overrides in all environments, except Render deploy webhook URLs.
+    if (override && !isWebhookUrl) {
+        return override;
+    }
+    if (isWebhookUrl) {
+        localStorage.removeItem("cfApiBaseOverride");
+    }
 
     const host = window.location.hostname;
     const isLocal =
@@ -10,20 +19,9 @@ function cfResolveAuthApiBase() {
         host === "localhost" ||
         host === "127.0.0.1";
 
+    // Local default when no override is configured.
     if (isLocal) {
-        const isLocalOverride = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(override);
-        if (override && !isLocalOverride) {
-            localStorage.removeItem("cfApiBaseOverride");
-        }
-        return isLocalOverride ? override : "http://127.0.0.1:5000";
-    }
-
-    const isWebhookUrl = /api\.render\.com\/deploy/i.test(override);
-    if (override && !isWebhookUrl) {
-        return override;
-    }
-    if (isWebhookUrl) {
-        localStorage.removeItem("cfApiBaseOverride");
+        return "http://127.0.0.1:5000";
     }
 
     return "https://build-seed.onrender.com";
