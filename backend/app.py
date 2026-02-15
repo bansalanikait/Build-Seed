@@ -1,15 +1,34 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
+from pathlib import Path
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Firebase
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+def init_firebase():
+    """Initialize Firebase without crashing when credentials are missing/empty."""
+    key_from_env = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
+    key_path = Path(key_from_env).expanduser() if key_from_env else Path(__file__).with_name("serviceAccountKey.json")
+
+    try:
+        if not firebase_admin._apps:
+            if key_path.exists() and key_path.stat().st_size > 0:
+                cred = credentials.Certificate(str(key_path))
+                firebase_admin.initialize_app(cred)
+            else:
+                firebase_admin.initialize_app()
+        return firestore.client(), None
+    except Exception:
+        return None, (
+            "Firebase is not configured. Add a valid service account JSON at "
+            "`backend/serviceAccountKey.json` or set `FIREBASE_SERVICE_ACCOUNT_PATH`."
+        )
+
+
+db, firebase_init_error = init_firebase()
 
 
 @app.route("/")
@@ -27,6 +46,12 @@ def verify_token(req):
         return auth.verify_id_token(id_token)
     except Exception:
         return None
+
+
+def ensure_backend_ready():
+    if firebase_init_error:
+        return jsonify({"error": firebase_init_error}), 500
+    return None
 
 
 def is_admin_user(user):
@@ -50,6 +75,10 @@ def has_conflict(room, date, start_time, end_time):
 
 @app.route("/api/create-booking", methods=["POST"])
 def create_booking():
+    backend_error = ensure_backend_ready()
+    if backend_error:
+        return backend_error
+
     user = verify_token(request)
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
@@ -94,6 +123,10 @@ def create_booking():
 
 @app.route("/api/get-bookings", methods=["GET"])
 def get_bookings():
+    backend_error = ensure_backend_ready()
+    if backend_error:
+        return backend_error
+
     user = verify_token(request)
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
@@ -122,6 +155,10 @@ def get_bookings():
 
 @app.route("/api/get-all-bookings", methods=["GET"])
 def get_all_bookings():
+    backend_error = ensure_backend_ready()
+    if backend_error:
+        return backend_error
+
     user = verify_token(request)
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
@@ -150,6 +187,10 @@ def get_all_bookings():
 
 
 def update_booking_status(new_status):
+    backend_error = ensure_backend_ready()
+    if backend_error:
+        return backend_error
+
     user = verify_token(request)
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
