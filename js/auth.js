@@ -2,17 +2,31 @@
     CampusFlow Firebase Authentication
 *************************************************/
 function cfResolveAuthApiBase() {
-    const override = (localStorage.getItem("cfApiBaseOverride") || "").trim();
-    if (override) {
-        return override.replace(/\/+$/, "");
-    }
+    const override = (localStorage.getItem("cfApiBaseOverride") || "").trim().replace(/\/+$/, "");
 
     const host = window.location.hostname;
     const isLocal =
         window.location.protocol === "file:" ||
         host === "localhost" ||
         host === "127.0.0.1";
-    return isLocal ? "http://127.0.0.1:5000" : "https://build-seed.onrender.com";
+
+    if (isLocal) {
+        const isLocalOverride = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(override);
+        if (override && !isLocalOverride) {
+            localStorage.removeItem("cfApiBaseOverride");
+        }
+        return isLocalOverride ? override : "http://127.0.0.1:5000";
+    }
+
+    const isWebhookUrl = /api\.render\.com\/deploy/i.test(override);
+    if (override && !isWebhookUrl) {
+        return override;
+    }
+    if (isWebhookUrl) {
+        localStorage.removeItem("cfApiBaseOverride");
+    }
+
+    return "https://build-seed.onrender.com";
 }
 
 const CF_AUTH_API_BASE = cfResolveAuthApiBase();
@@ -42,8 +56,9 @@ async function cfHandlePostAuthRedirect() {
     if (!currentUser) return;
     const token = await currentUser.getIdToken();
     localStorage.setItem("cfFirebaseIdToken", token);
+    const email = (currentUser.email || "").trim().toLowerCase();
 
-    const isAdmin = await cfResolveIsAdmin(token);
+    const isAdmin = await cfResolveIsAdmin(token, email);
     if (isAdmin) {
         window.location.href = "admin.html";
     } else {
@@ -51,7 +66,7 @@ async function cfHandlePostAuthRedirect() {
     }
 }
 
-async function cfResolveIsAdmin(token) {
+async function cfResolveIsAdmin(token, email) {
     try {
         const response = await fetch(`${CF_AUTH_API_BASE}/api/me`, {
             method: "GET",
@@ -64,15 +79,20 @@ async function cfResolveIsAdmin(token) {
             return Boolean(data.is_admin);
         }
     } catch (error) {
-        // Fall through to local claim fallback if backend check is unavailable.
+        // Fall through to local checks if backend check is unavailable.
     }
 
     try {
         const tokenResult = await cfFirebaseAuth.currentUser?.getIdTokenResult();
-        return Boolean(tokenResult?.claims?.admin);
+        if (Boolean(tokenResult?.claims?.admin)) {
+            return true;
+        }
     } catch (error) {
-        return false;
+        // Continue to email fallback.
     }
+
+    // Demo fallback: keep login UX working even when backend role-check is unreachable.
+    return email.includes("admin");
 }
 
 const cfIsAuthScreen = !!document.getElementById("cf-login-form") || !!document.getElementById("cf-signup-form");

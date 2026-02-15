@@ -1,15 +1,31 @@
 function cfResolveApiBase() {
-    const override = (localStorage.getItem("cfApiBaseOverride") || "").trim();
-    if (override) {
-        return override.replace(/\/+$/, "");
-    }
+    const override = (localStorage.getItem("cfApiBaseOverride") || "").trim().replace(/\/+$/, "");
 
     const host = window.location.hostname;
     const isLocal =
         window.location.protocol === "file:" ||
         host === "localhost" ||
         host === "127.0.0.1";
-    return isLocal ? "http://127.0.0.1:5000" : "https://api.render.com/deploy/srv-d68ot1rnv86c73eics3g?key=HVuGhI_U0rA";
+
+    // When running locally, only honor local overrides to avoid stale production URLs.
+    if (isLocal) {
+        const isLocalOverride = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(override);
+        if (override && !isLocalOverride) {
+            localStorage.removeItem("cfApiBaseOverride");
+        }
+        return isLocalOverride ? override : "http://127.0.0.1:5000";
+    }
+
+    // Ignore invalid overrides such as Render deploy webhook URLs.
+    const isWebhookUrl = /api\.render\.com\/deploy/i.test(override);
+    if (override && !isWebhookUrl) {
+        return override;
+    }
+    if (isWebhookUrl) {
+        localStorage.removeItem("cfApiBaseOverride");
+    }
+
+    return "https://build-seed.onrender.com";
 }
 
 const CF_API_BASE = cfResolveApiBase();
