@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
+import json
 import os
 import re
 from datetime import datetime
@@ -9,8 +10,18 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Firebase
-cred = credentials.Certificate("serviceAccountKey.json")
+# Initialize Firebase:
+# - Prefer JSON from env var `FIREBASE_SERVICE_ACCOUNT_JSON` for cloud deploys.
+# - Fallback to local file for development.
+firebase_cred_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
+if firebase_cred_json:
+    try:
+        cred = credentials.Certificate(json.loads(firebase_cred_json))
+    except Exception as exc:
+        raise RuntimeError("Invalid FIREBASE_SERVICE_ACCOUNT_JSON value.") from exc
+else:
+    cred = credentials.Certificate("serviceAccountKey.json")
+
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 

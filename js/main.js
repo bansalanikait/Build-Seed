@@ -9,7 +9,7 @@ function cfResolveApiBase() {
         window.location.protocol === "file:" ||
         host === "localhost" ||
         host === "127.0.0.1";
-    return isLocal ? "http://127.0.0.1:5000" : "https://build-seed.onrender.com";
+    return isLocal ? "http://127.0.0.1:5000" : "https://api.render.com/deploy/srv-d68ot1rnv86c73eics3g?key=HVuGhI_U0rA";
 }
 
 const CF_API_BASE = cfResolveApiBase();
