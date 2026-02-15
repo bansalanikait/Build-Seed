@@ -6,15 +6,31 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body class="cf-page-login">
 
-    <div class="cf-container">
-        <div class="cf-card">
-            <h2>CampusFlow Login</h2>
+    <div class="cf-auth-layout">
+        <section class="cf-auth-panel">
+            <span class="cf-pill">CampusFlow ERP</span>
+            <h1>Smart Classroom Booking Platform</h1>
+            <p>Plan classes faster, avoid clashes, and track approvals in one place.</p>
+            <ul class="cf-feature-list">
+                <li>Conflict-aware slot submissions</li>
+                <li>Real-time booking visibility</li>
+                <li>Role-based approval workflows</li>
+            </ul>
+        </section>
+
+        <div class="cf-card cf-auth-card">
+            <h2>Sign In</h2>
+            <p class="cf-subtitle">Use your institute account credentials.</p>
 
             <form id="cf-login-form">
-                <input type="email" id="cf-input-email" placeholder="Enter Email" required>
+                <label for="cf-input-email">Email</label>
+                <input type="email" id="cf-input-email" placeholder="you@college.edu" required>
+
+                <label for="cf-input-password">Password</label>
                 <input type="password" id="cf-input-password" placeholder="Enter Password" required>
+
                 <button type="submit">Login</button>
             </form>
 

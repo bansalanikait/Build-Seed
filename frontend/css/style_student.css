@@ -135,6 +135,70 @@ body {
     gap: 15px;
 }
 
+/* ----------- BOOKING SUMMARY ----------- */
+.cf-booking-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.cf-summary-item {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--border-radius);
+    padding: 10px 12px;
+}
+
+.cf-summary-label {
+    display: block;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    margin-bottom: 2px;
+}
+
+.cf-summary-item strong {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+}
+
+/* ----------- BOOKING TOOLS ----------- */
+.cf-booking-tools {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.cf-booking-tools input,
+.cf-booking-tools select,
+.cf-booking-tools button {
+    padding: 10px 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.cf-booking-tools input:focus,
+.cf-booking-tools select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+#cf-export-bookings-btn {
+    border: none;
+    background-color: #0f766e;
+    color: #ffffff;
+    cursor: pointer;
+    transition: transform var(--transition-speed), background var(--transition-speed);
+}
+
+#cf-export-bookings-btn:hover {
+    background-color: #115e59;
+    transform: translateY(-1px);
+}
+
 /* ----------- SINGLE BOOKING ITEM ----------- */
 .cf-booking-item {
     padding: 15px;
@@ -200,6 +264,14 @@ button[onclick="cfHandleLogout()"]:hover {
 
     .cf-container h2 {
         font-size: 1.6rem;
+    }
+
+    .cf-booking-summary {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+
+    .cf-booking-tools {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -545,6 +617,23 @@ body.cf-dark button:hover {
 body.cf-dark .cf-booking-item {
     background-color: #020617;
     border-left-color: #38bdf8;
+}
+
+body.cf-dark .cf-summary-item {
+    background-color: #0f172a;
+    border-color: #1e293b;
+}
+
+body.cf-dark .cf-summary-item strong {
+    color: #e5e7eb;
+}
+
+body.cf-dark .cf-summary-label {
+    color: #94a3b8;
+}
+
+body.cf-dark #cf-export-bookings-btn {
+    background-color: #0f766e;
 }
 
 /* ----------- DARK LOGOUT ----------- */

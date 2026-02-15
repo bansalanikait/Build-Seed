@@ -5,17 +5,26 @@
     <title>CampusFlow - Admin Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="cf-page-admin">
 
-    <div class="cf-container">
-        <h2>Admin Dashboard</h2>
+    <header class="cf-topbar">
+        <div>
+            <p class="cf-topbar-kicker">CampusFlow</p>
+            <h1>Admin Dashboard</h1>
+        </div>
+        <button class="cf-logout-btn" onclick="cfHandleLogout()">Logout</button>
+    </header>
+
+    <div class="cf-container cf-admin-container">
+        <div class="cf-card cf-admin-intro">
+            <h2>Booking Review Center</h2>
+            <p>Approve or reject pending classroom requests and monitor booking activity.</p>
+        </div>
 
         <div class="cf-card">
             <h3>All Booking Requests</h3>
             <div id="cf-admin-booking-container"></div>
         </div>
-
-        <button onclick="cfHandleLogout()">Logout</button>
     </div>
 
     <!-- Firebase SDK -->

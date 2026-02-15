@@ -24,6 +24,45 @@
 
         <div class="cf-card">
             <h3>Your Bookings</h3>
+            <div class="cf-booking-summary" id="cf-booking-summary">
+                <div class="cf-summary-item">
+                    <span class="cf-summary-label">Total</span>
+                    <strong id="cf-summary-total">0</strong>
+                </div>
+                <div class="cf-summary-item">
+                    <span class="cf-summary-label">Pending</span>
+                    <strong id="cf-summary-pending">0</strong>
+                </div>
+                <div class="cf-summary-item">
+                    <span class="cf-summary-label">Approved</span>
+                    <strong id="cf-summary-approved">0</strong>
+                </div>
+                <div class="cf-summary-item">
+                    <span class="cf-summary-label">Rejected</span>
+                    <strong id="cf-summary-rejected">0</strong>
+                </div>
+            </div>
+
+            <div class="cf-booking-tools">
+                <input
+                    type="text"
+                    id="cf-booking-search"
+                    placeholder="Search by room or purpose"
+                    aria-label="Search bookings"
+                >
+                <select id="cf-booking-status-filter" aria-label="Filter by booking status">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <select id="cf-booking-sort" aria-label="Sort bookings">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+                <button type="button" id="cf-export-bookings-btn">Export CSV</button>
+            </div>
+
             <div id="cf-booking-list-container"></div>
         </div>
     </div>
