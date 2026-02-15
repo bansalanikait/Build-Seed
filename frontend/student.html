@@ -5,6 +5,7 @@
     <title>CampusFlow - Student Dashboard</title>
     <link rel="stylesheet" href="css/style_student.css">
 </head>
+<body>
 
     <div class="cf-container">
         <h2>Student Dashboard</h2>
@@ -16,6 +17,7 @@
                 <input type="date" id="cf-input-date" required>
                 <input type="time" id="cf-input-start-time" required>
                 <input type="time" id="cf-input-end-time" required>
+                <input type="text" id="cf-input-purpose" placeholder="Purpose" required>
                 <button type="submit">Submit Booking</button>
             </form>
         </div>
@@ -26,6 +28,10 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
     <button onclick="cfHandleLogout()">Logout</button>
 

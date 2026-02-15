@@ -1,167 +1,192 @@
-document.addEventListener("DOMContentLoaded", async function () {
+const CF_API_BASE = "http://127.0.0.1:5000";
 
-    const cfStoredToken = localStorage.getItem("cfFirebaseIdToken");
-
-    if (!cfStoredToken) {
+function cfGetAuthHeaders() {
+    const token = localStorage.getItem("cfFirebaseIdToken");
+    if (!token) {
         window.location.href = "index.html";
+        return null;
     }
-
-});
-
-// STUDENT BOOKING
-
-const cfElBookingForm = document.getElementById("cf-booking-form");
-
-if (cfElBookingForm) {
-    cfElBookingForm.addEventListener("submit", async function (cfEventBooking) {
-        cfEventBooking.preventDefault();
-
-        const cfRoomValue = document.getElementById("cf-input-room").value;
-        const cfDateValue = document.getElementById("cf-input-date").value;
-        const cfStartTimeValue = document.getElementById("cf-input-start-time").value;
-        const cfEndTimeValue = document.getElementById("cf-input-end-time").value;
-
-        try {
-            const cfBookingResponse = await fetch("http://127.0.0.1:5000/api/create-booking", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    cfRoomNumber: cfRoomValue,
-                    cfBookingDate: cfDateValue,
-                    cfBookingStartTime: cfStartTimeValue,
-                    cfBookingEndTime: cfEndTimeValue
-                })
-            });
-
-            const cfBookingResponseData = await cfBookingResponse.json();
-
-            if (cfBookingResponseData.cfBookingStatus === "created") {
-                alert("Booking Submitted!");
-                cfFetchStudentBookings();
-            } else {
-                alert("Conflict Detected!");
-            }
-
-        } catch (cfBookingError) {
-            console.error("Booking Error:", cfBookingError);
-        }
-    });
+    return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+    };
 }
 
+async function cfHandleApiResponse(response) {
+    let data = {};
+    try {
+        data = await response.json();
+    } catch (error) {
+        data = {};
+    }
 
-// FETCH STUDENT BOOKINGS
+    if (response.status === 401) {
+        localStorage.removeItem("cfFirebaseIdToken");
+        window.location.href = "index.html";
+        throw new Error("Session expired. Please log in again.");
+    }
+
+    if (!response.ok) {
+        throw new Error(data.message || data.error || "Request failed");
+    }
+
+    return data;
+}
+
+async function cfCreateBooking(event) {
+    event.preventDefault();
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    const payload = {
+        room: document.getElementById("cf-input-room").value.trim(),
+        date: document.getElementById("cf-input-date").value,
+        start_time: document.getElementById("cf-input-start-time").value,
+        end_time: document.getElementById("cf-input-end-time").value,
+        purpose: document.getElementById("cf-input-purpose").value.trim()
+    };
+
+    if (payload.start_time >= payload.end_time) {
+        alert("End time must be greater than start time.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/create-booking`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload)
+        });
+        const data = await cfHandleApiResponse(response);
+        alert(data.message || "Booking submitted");
+        await cfFetchStudentBookings();
+    } catch (error) {
+        alert(error.message || "Unable to submit booking");
+    }
+}
+
 async function cfFetchStudentBookings() {
+    const container = document.getElementById("cf-booking-list-container");
+    if (!container) return;
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
     try {
-        const cfFetchResponse = await fetch("http://127.0.0.1:5000/api/get-bookings");
-        const cfFetchResponseData = await cfFetchResponse.json();
+        const response = await fetch(`${CF_API_BASE}/api/get-bookings`, {
+            method: "GET",
+            headers
+        });
+        const data = await cfHandleApiResponse(response);
+        const bookings = data.bookings || [];
 
-        const cfElBookingContainer = document.getElementById("cf-booking-list-container");
-
-        if (cfElBookingContainer) {
-            cfElBookingContainer.innerHTML = "";
-
-            cfFetchResponseData.cfBookingList.forEach(function (cfSingleBookingItem) {
-                const cfBookingDiv = document.createElement("div");
-                cfBookingDiv.innerHTML = `
-                    <p>
-                        Room: ${cfSingleBookingItem.cfRoomNumber} |
-                        Date: ${cfSingleBookingItem.cfBookingDate} |
-                        Status: ${cfSingleBookingItem.cfBookingStatus}
-                    </p>
-                `;
-                cfElBookingContainer.appendChild(cfBookingDiv);
-            });
+        container.innerHTML = "";
+        if (!bookings.length) {
+            container.innerHTML = "<p class='cf-empty-message'>No bookings yet.</p>";
+            return;
         }
 
-    } catch (cfFetchError) {
-        console.error("Fetch Error:", cfFetchError);
+        bookings.forEach((booking) => {
+            const item = document.createElement("div");
+            item.className = "cf-booking-item";
+            item.dataset.status = (booking.status || "").toLowerCase();
+            item.innerHTML = `
+                <p><strong>Room:</strong> ${booking.room}</p>
+                <p><strong>Date:</strong> ${booking.date}</p>
+                <p><strong>Time:</strong> ${booking.start_time} - ${booking.end_time}</p>
+                <p><strong>Purpose:</strong> ${booking.purpose}</p>
+                <p><strong>Status:</strong> ${booking.status}</p>
+            `;
+            container.appendChild(item);
+        });
+    } catch (error) {
+        container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
     }
 }
 
-
-// ADMIN FETCH
 async function cfFetchAdminBookings() {
+    const container = document.getElementById("cf-admin-booking-container");
+    if (!container) return;
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
     try {
-        const cfAdminResponse = await fetch("http://127.0.0.1:5000/api/get-all-bookings");
-        const cfAdminData = await cfAdminResponse.json();
+        const response = await fetch(`${CF_API_BASE}/api/get-all-bookings`, {
+            method: "GET",
+            headers
+        });
+        const data = await cfHandleApiResponse(response);
+        const bookings = data.bookings || [];
 
-        const cfElAdminContainer = document.getElementById("cf-admin-booking-container");
-
-        if (cfElAdminContainer) {
-            cfElAdminContainer.innerHTML = "";
-
-            cfAdminData.cfBookingList.forEach(function (cfAdminBookingItem) {
-                const cfAdminDiv = document.createElement("div");
-                cfAdminDiv.innerHTML = `
-                    <p>
-                        Room: ${cfAdminBookingItem.cfRoomNumber} |
-                        Date: ${cfAdminBookingItem.cfBookingDate} |
-                        Status: ${cfAdminBookingItem.cfBookingStatus}
-                        <button onclick="cfApproveBooking(${cfAdminBookingItem.cfBookingId})">Approve</button>
-                        <button onclick="cfRejectBooking(${cfAdminBookingItem.cfBookingId})">Reject</button>
-                    </p>
-                `;
-                cfElAdminContainer.appendChild(cfAdminDiv);
-            });
+        container.innerHTML = "";
+        if (!bookings.length) {
+            container.innerHTML = "<p class='cf-empty-message'>No bookings found.</p>";
+            return;
         }
 
-    } catch (cfAdminError) {
-        console.error("Admin Fetch Error:", cfAdminError);
+        bookings.forEach((booking) => {
+            const row = document.createElement("div");
+            row.className = "cf-booking-item";
+            row.dataset.status = (booking.status || "").toLowerCase();
+            row.innerHTML = `
+                <p><strong>Room:</strong> ${booking.room} | <strong>Date:</strong> ${booking.date} | <strong>Time:</strong> ${booking.start_time} - ${booking.end_time}</p>
+                <p><strong>User:</strong> ${booking.user} | <strong>Purpose:</strong> ${booking.purpose} | <strong>Status:</strong> ${booking.status}</p>
+                <button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>
+                <button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>
+            `;
+            container.appendChild(row);
+        });
+    } catch (error) {
+        container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
     }
 }
 
+async function cfUpdateBookingStatus(id, endpoint) {
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
 
-// APPROVE
-async function cfApproveBooking(cfBookingIdValue) {
-    await fetch(`http://127.0.0.1:5000/api/approve/${cfBookingIdValue}`);
-    cfFetchAdminBookings();
+    const response = await fetch(`${CF_API_BASE}${endpoint}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ id })
+    });
+    await cfHandleApiResponse(response);
+    await cfFetchAdminBookings();
 }
 
-
-// REJECT
-async function cfRejectBooking(cfBookingIdValue) {
-    await fetch(`http://127.0.0.1:5000/api/reject/${cfBookingIdValue}`);
-    cfFetchAdminBookings();
+async function cfApproveBooking(id) {
+    try {
+        await cfUpdateBookingStatus(id, "/api/approve");
+    } catch (error) {
+        alert(error.message || "Unable to approve booking");
+    }
 }
 
+async function cfRejectBooking(id) {
+    try {
+        await cfUpdateBookingStatus(id, "/api/reject");
+    } catch (error) {
+        alert(error.message || "Unable to reject booking");
+    }
+}
 
-// AUTO LOAD
-document.addEventListener("DOMContentLoaded", function () {
-    cfFetchStudentBookings();
-    cfFetchAdminBookings();
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("cfFirebaseIdToken");
+    const isDashboardPage = !!document.getElementById("cf-booking-form") || !!document.getElementById("cf-admin-booking-container");
+    if (isDashboardPage && !token) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    const bookingForm = document.getElementById("cf-booking-form");
+    if (bookingForm) {
+        bookingForm.addEventListener("submit", cfCreateBooking);
+        cfFetchStudentBookings();
+    }
+
+    if (document.getElementById("cf-admin-booking-container")) {
+        cfFetchAdminBookings();
+    }
 });
-
-
-// ===============================
-// DARK / LIGHT MODE TOGGLE
-// ===============================
-
-function cfToggleTheme() {
-    const body = document.body;
-    const toggleBtn = document.querySelector(".cf-theme-toggle");
-
-    body.classList.toggle("cf-dark");
-
-    if (body.classList.contains("cf-dark")) {
-        localStorage.setItem("cf-theme", "dark");
-        if (toggleBtn) toggleBtn.innerText = "☀️ Light Mode";
-    } else {
-        localStorage.setItem("cf-theme", "light");
-        if (toggleBtn) toggleBtn.innerText = "🌙 Dark Mode";
-    }
-}
-
-// ===============================
-// LOAD SAVED THEME ON PAGE LOAD
-// ===============================
-(function () {
-    const savedTheme = localStorage.getItem("cf-theme");
-    const toggleBtn = document.querySelector(".cf-theme-toggle");
-
-    if (savedTheme === "dark") {
-        document.body.classList.add("cf-dark");
-        if (toggleBtn) toggleBtn.innerText = "☀️ Light Mode";
-    }
-})();
