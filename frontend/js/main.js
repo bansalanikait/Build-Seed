@@ -122,3 +122,36 @@ document.addEventListener("DOMContentLoaded", function () {
     cfFetchStudentBookings();
     cfFetchAdminBookings();
 });
+
+
+// ===============================
+// DARK / LIGHT MODE TOGGLE
+// ===============================
+
+function cfToggleTheme() {
+    const body = document.body;
+    const toggleBtn = document.querySelector(".cf-theme-toggle");
+
+    body.classList.toggle("cf-dark");
+
+    if (body.classList.contains("cf-dark")) {
+        localStorage.setItem("cf-theme", "dark");
+        if (toggleBtn) toggleBtn.innerText = "☀️ Light Mode";
+    } else {
+        localStorage.setItem("cf-theme", "light");
+        if (toggleBtn) toggleBtn.innerText = "🌙 Dark Mode";
+    }
+}
+
+// ===============================
+// LOAD SAVED THEME ON PAGE LOAD
+// ===============================
+(function () {
+    const savedTheme = localStorage.getItem("cf-theme");
+    const toggleBtn = document.querySelector(".cf-theme-toggle");
+
+    if (savedTheme === "dark") {
+        document.body.classList.add("cf-dark");
+        if (toggleBtn) toggleBtn.innerText = "☀️ Light Mode";
+    }
+})();
