@@ -25,6 +25,9 @@ const cfAcademicState = {
     results: [],
     savedIds: []
 };
+const cfNoteState = {
+    items: []
+};
 
 const cfAcademicResources = [
     {
@@ -227,6 +230,78 @@ function cfUpdateAdminStats() {
     setText("cf-admin-stat-booking-alerts", cfAdminState.bookingAlertsCount);
     setText("cf-admin-stat-commute-alerts", cfAdminState.commuteAlertsCount);
     setText("cf-admin-stat-affairs", cfAdminState.currentAffairsCount);
+}
+
+function cfLoadNotes() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("cfPersonalNotes") || "[]");
+        cfNoteState.items = Array.isArray(saved) ? saved : [];
+    } catch (error) {
+        cfNoteState.items = [];
+    }
+}
+
+function cfSaveNotes() {
+    localStorage.setItem("cfPersonalNotes", JSON.stringify(cfNoteState.items));
+}
+
+function cfRenderNotes() {
+    const list = document.getElementById("cf-note-list");
+    if (!list) return;
+
+    list.innerHTML = "";
+    if (!cfNoteState.items.length) {
+        list.innerHTML = "<p class='cf-empty-message'>No reminders yet.</p>";
+        return;
+    }
+
+    cfNoteState.items.forEach((item) => {
+        const row = document.createElement("article");
+        row.className = "cf-note-item";
+        row.innerHTML = `
+            <div class="cf-note-head">
+                <h4>${cfEscapeHtml(item.title)}</h4>
+                <button type="button" class="cf-note-delete" onclick="cfDeleteNote('${item.id}')">Delete</button>
+            </div>
+            <p>${cfEscapeHtml(item.text)}</p>
+            <span>${cfEscapeHtml(item.created_at)}</span>
+        `;
+        list.appendChild(row);
+    });
+}
+
+function cfDeleteNote(id) {
+    cfNoteState.items = cfNoteState.items.filter((item) => item.id !== id);
+    cfSaveNotes();
+    cfRenderNotes();
+}
+
+function cfInitNoteBoard() {
+    const form = document.getElementById("cf-note-form");
+    if (!form) return;
+
+    cfLoadNotes();
+    cfRenderNotes();
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const titleEl = document.getElementById("cf-note-title");
+        const textEl = document.getElementById("cf-note-text");
+        const title = (titleEl?.value || "").trim();
+        const text = (textEl?.value || "").trim();
+        if (!title || !text) return;
+
+        const note = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            title,
+            text,
+            created_at: new Date().toLocaleString()
+        };
+        cfNoteState.items = [note, ...cfNoteState.items].slice(0, 40);
+        cfSaveNotes();
+        cfRenderNotes();
+        form.reset();
+    });
 }
 
 function cfGetAuthHeaders() {
@@ -1180,6 +1255,7 @@ document.addEventListener("DOMContentLoaded", () => {
         !!document.getElementById("cf-food-review-form") ||
         !!document.getElementById("cf-commute-form") ||
         !!document.getElementById("cf-academic-page") ||
+        !!document.getElementById("cf-note-form") ||
         !!document.getElementById("cf-admin-booking-container") ||
         !!document.getElementById("cf-student-home") ||
         !!document.getElementById("cf-room-booking-page") ||
@@ -1236,6 +1312,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("cf-student-current-affairs")) {
         cfFetchCurrentAffairs();
     }
+
+    cfInitNoteBoard();
 
     const currentAffairForm = document.getElementById("cf-current-affair-form");
     if (currentAffairForm) {

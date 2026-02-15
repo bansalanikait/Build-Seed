@@ -1752,3 +1752,123 @@ body.cf-dark .cf-academic-result-actions button {
         position: static;
     }
 }
+
+/* =========================================================
+   STABILITY + REMINDER BOARD
+   ========================================================= */
+
+body.cf-app-body .cf-card:hover {
+    transform: none !important;
+    animation: none !important;
+}
+
+body.cf-app-body .cf-card::before {
+    display: none !important;
+}
+
+body.cf-app-body .cf-option-card:hover,
+body.cf-app-body #cf-booking-form button:hover,
+body.cf-app-body #cf-export-bookings-btn:hover,
+body.cf-app-body button[onclick="cfHandleLogout()"]:hover {
+    transform: none !important;
+}
+
+body.cf-app-body .cf-app-shell {
+    contain: layout style;
+}
+
+.cf-note-form {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.cf-note-form input,
+.cf-note-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #d1d9e6;
+    font-size: 0.92rem;
+    font-family: inherit;
+    background: #ffffff;
+}
+
+.cf-note-form textarea {
+    min-height: 84px;
+    resize: vertical;
+}
+
+.cf-note-form button {
+    width: fit-content;
+    min-width: 140px;
+}
+
+#cf-note-list {
+    display: grid;
+    gap: 10px;
+}
+
+.cf-note-item {
+    border: 1px solid #dbe4ec;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fbfdff;
+}
+
+.cf-note-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.cf-note-head h4 {
+    font-size: 0.98rem;
+    color: #0f172a;
+}
+
+.cf-note-item p {
+    font-size: 0.9rem;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.cf-note-item span {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.cf-note-delete {
+    width: auto;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    background: #ef4444;
+}
+
+.cf-note-delete:hover {
+    background: #dc2626;
+}
+
+body.cf-dark .cf-note-form input,
+body.cf-dark .cf-note-form textarea {
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #334155;
+}
+
+body.cf-dark .cf-note-item {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.cf-dark .cf-note-head h4 {
+    color: #e2e8f0;
+}
+
+body.cf-dark .cf-note-item p,
+body.cf-dark .cf-note-item span {
+    color: #94a3b8;
+}
