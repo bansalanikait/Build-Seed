@@ -1,3 +1,13 @@
+document.addEventListener("DOMContentLoaded", async function () {
+
+    const cfStoredToken = localStorage.getItem("cfFirebaseIdToken");
+
+    if (!cfStoredToken) {
+        window.location.href = "index.html";
+    }
+
+});
+
 // STUDENT BOOKING
 
 const cfElBookingForm = document.getElementById("cf-booking-form");
