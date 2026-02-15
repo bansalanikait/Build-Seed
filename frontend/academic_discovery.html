@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CampusFlow - Academic Discovery</title>
+    <link rel="stylesheet" href="css/style_student.css">
+</head>
+<body class="cf-app-body">
+
+    <div class="cf-app-shell" id="cf-academic-page">
+        <aside class="cf-app-sidebar">
+            <div class="cf-app-brand">
+                <div class="cf-app-logo">CF</div>
+                <div>
+                    <h1>CampusFlow</h1>
+                    <p>NITJ Student</p>
+                </div>
+            </div>
+
+            <nav class="cf-app-nav">
+                <a href="student.html">Dashboard</a>
+                <a class="active" href="academic_discovery.html">Academic Discovery</a>
+                <a href="room_booking.html">Room Booking</a>
+                <a href="food_review.html">Food Review</a>
+                <a href="commute_tracker.html">Safe Arrival</a>
+            </nav>
+
+            <button class="cf-side-logout" onclick="cfHandleLogout()">Logout</button>
+        </aside>
+
+        <main class="cf-app-main">
+            <header class="cf-app-header">
+                <h2>Smart Search & Discovery</h2>
+                <p>Find useful NITJ academic resources through guided selection.</p>
+            </header>
+
+            <section class="cf-app-canvas">
+                <div class="cf-academic-layout">
+                    <section class="cf-card cf-academic-step-card">
+                        <div class="cf-academic-stepper">
+                            <div class="cf-academic-step active" data-step-indicator="1"><span>1</span> Branch</div>
+                            <div class="cf-academic-step" data-step-indicator="2"><span>2</span> Subject</div>
+                            <div class="cf-academic-step" data-step-indicator="3"><span>3</span> Search</div>
+                        </div>
+
+                        <div class="cf-academic-step-panel active" data-step-panel="1">
+                            <h3>Step 1: Branch & Semester</h3>
+                            <select id="cf-ac-branch"></select>
+                            <select id="cf-ac-semester">
+                                <option value="">Select Semester</option>
+                                <option value="1">Semester 1</option>
+                                <option value="2">Semester 2</option>
+                                <option value="3">Semester 3</option>
+                                <option value="4">Semester 4</option>
+                            </select>
+                            <button type="button" id="cf-ac-step1-next">Next</button>
+                        </div>
+
+                        <div class="cf-academic-step-panel" data-step-panel="2">
+                            <h3>Step 2: Subject</h3>
+                            <select id="cf-ac-subject"></select>
+                            <div class="cf-academic-actions">
+                                <button type="button" class="cf-ac-btn-secondary" id="cf-ac-step2-back">Back</button>
+                                <button type="button" id="cf-ac-step2-next">Next</button>
+                            </div>
+                        </div>
+
+                        <div class="cf-academic-step-panel" data-step-panel="3">
+                            <h3>Step 3: Search</h3>
+                            <input type="text" id="cf-ac-query" placeholder="Search topic, keyword, or file name">
+                            <select id="cf-ac-type">
+                                <option value="all">All Types</option>
+                                <option value="notes">Notes</option>
+                                <option value="syllabus">Syllabus</option>
+                                <option value="paper">Question Paper</option>
+                                <option value="video">Video</option>
+                            </select>
+                            <div class="cf-academic-actions">
+                                <button type="button" class="cf-ac-btn-secondary" id="cf-ac-step3-back">Back</button>
+                                <button type="button" id="cf-ac-run-search">Find Resources</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="cf-card">
+                        <h3>Results</h3>
+                        <div id="cf-ac-results"></div>
+                    </section>
+                </div>
+
+                <section class="cf-card">
+                    <h3>Saved Resources</h3>
+                    <div id="cf-ac-saved-list"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+
+</body>
+</html>

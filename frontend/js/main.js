@@ -20,6 +20,194 @@ const cfAdminState = {
     commuteAlertsCount: 0,
     currentAffairsCount: 0
 };
+const cfAcademicState = {
+    step: 1,
+    results: [],
+    savedIds: []
+};
+
+const cfAcademicResources = [
+    {
+        id: "ac-1",
+        branch: "CSE",
+        semester: "1",
+        subject: "Programming Fundamentals",
+        type: "notes",
+        title: "C Programming Unit Notes",
+        summary: "Structured notes on loops, arrays, functions, and pointers.",
+        url: "#"
+    },
+    {
+        id: "ac-2",
+        branch: "CSE",
+        semester: "1",
+        subject: "Programming Fundamentals",
+        type: "paper",
+        title: "Previous Year Intro Programming Papers",
+        summary: "Curated question papers with pattern highlights.",
+        url: "#"
+    },
+    {
+        id: "ac-3",
+        branch: "CSE",
+        semester: "1",
+        subject: "Engineering Mathematics I",
+        type: "notes",
+        title: "Mathematics I Quick Revision Sheets",
+        summary: "Short formula notes for calculus and linear algebra.",
+        url: "#"
+    },
+    {
+        id: "ac-4",
+        branch: "CSE",
+        semester: "2",
+        subject: "Data Structures",
+        type: "notes",
+        title: "Data Structures Crash Notes",
+        summary: "Stacks, queues, linked lists, trees, and complexity basics.",
+        url: "#"
+    },
+    {
+        id: "ac-5",
+        branch: "CSE",
+        semester: "2",
+        subject: "Data Structures",
+        type: "video",
+        title: "Data Structures Practice Sessions",
+        summary: "Recorded problem-solving sessions for exams.",
+        url: "#"
+    },
+    {
+        id: "ac-6",
+        branch: "CSE",
+        semester: "3",
+        subject: "Database Systems",
+        type: "notes",
+        title: "DBMS Complete Class Notes",
+        summary: "ER modeling, SQL, normalization, and transactions.",
+        url: "#"
+    },
+    {
+        id: "ac-7",
+        branch: "CSE",
+        semester: "3",
+        subject: "Database Systems",
+        type: "paper",
+        title: "DBMS Midterm and Endterm Papers",
+        summary: "Topic-sorted paper bank for DBMS.",
+        url: "#"
+    },
+    {
+        id: "ac-8",
+        branch: "ECE",
+        semester: "1",
+        subject: "Basic Electronics",
+        type: "notes",
+        title: "Basic Electronics Classroom Notes",
+        summary: "Diodes, transistors, biasing, and practical observations.",
+        url: "#"
+    },
+    {
+        id: "ac-9",
+        branch: "ECE",
+        semester: "1",
+        subject: "Basic Electronics",
+        type: "syllabus",
+        title: "ECE Semester 1 Subject Syllabus",
+        summary: "Official course outcomes and evaluation pattern.",
+        url: "#"
+    },
+    {
+        id: "ac-10",
+        branch: "ECE",
+        semester: "2",
+        subject: "Signals and Systems",
+        type: "notes",
+        title: "Signals and Systems Master Notes",
+        summary: "LTI systems, transforms, and solved examples.",
+        url: "#"
+    },
+    {
+        id: "ac-11",
+        branch: "ECE",
+        semester: "2",
+        subject: "Signals and Systems",
+        type: "video",
+        title: "Signals Visualization Lectures",
+        summary: "Animated explanations for key transform concepts.",
+        url: "#"
+    },
+    {
+        id: "ac-12",
+        branch: "ECE",
+        semester: "3",
+        subject: "Analog Circuits",
+        type: "paper",
+        title: "Analog Circuits PYQ Collection",
+        summary: "Previous-year questions grouped by unit.",
+        url: "#"
+    },
+    {
+        id: "ac-13",
+        branch: "ME",
+        semester: "1",
+        subject: "Engineering Mechanics",
+        type: "notes",
+        title: "Engineering Mechanics Notes",
+        summary: "Force systems, equilibrium, and friction fundamentals.",
+        url: "#"
+    },
+    {
+        id: "ac-14",
+        branch: "ME",
+        semester: "2",
+        subject: "Thermodynamics",
+        type: "notes",
+        title: "Thermodynamics Concept Notes",
+        summary: "Laws of thermodynamics and process analyses.",
+        url: "#"
+    },
+    {
+        id: "ac-15",
+        branch: "ME",
+        semester: "2",
+        subject: "Thermodynamics",
+        type: "paper",
+        title: "Thermo Exam Archive",
+        summary: "Past papers and repeated question trends.",
+        url: "#"
+    },
+    {
+        id: "ac-16",
+        branch: "CE",
+        semester: "1",
+        subject: "Engineering Drawing",
+        type: "notes",
+        title: "Engineering Drawing Sheet Guide",
+        summary: "Projection methods and drafting practice notes.",
+        url: "#"
+    },
+    {
+        id: "ac-17",
+        branch: "CE",
+        semester: "2",
+        subject: "Surveying",
+        type: "notes",
+        title: "Surveying Field Manual Notes",
+        summary: "Levelling, theodolite, and practical methods.",
+        url: "#"
+    },
+    {
+        id: "ac-18",
+        branch: "CE",
+        semester: "3",
+        subject: "Structural Analysis",
+        type: "video",
+        title: "Structural Analysis Tutorial Playlist",
+        summary: "Beam and truss analysis walkthrough sessions.",
+        url: "#"
+    }
+];
 
 function cfEscapeHtml(value) {
     return String(value ?? "")
@@ -470,6 +658,178 @@ async function cfSubmitCommuteEta(event) {
     }
 }
 
+function cfGetAcademicBranches() {
+    return [...new Set(cfAcademicResources.map((item) => item.branch))].sort();
+}
+
+function cfGetAcademicSubjects(branch, semester) {
+    return [
+        ...new Set(
+            cfAcademicResources
+                .filter((item) => item.branch === branch && item.semester === semester)
+                .map((item) => item.subject)
+        )
+    ].sort();
+}
+
+function cfSetAcademicStep(step) {
+    cfAcademicState.step = step;
+    document.querySelectorAll("[data-step-indicator]").forEach((el) => {
+        const indicatorStep = Number(el.getAttribute("data-step-indicator"));
+        el.classList.toggle("active", indicatorStep === step);
+        el.classList.toggle("completed", indicatorStep < step);
+    });
+    document.querySelectorAll("[data-step-panel]").forEach((el) => {
+        const panelStep = Number(el.getAttribute("data-step-panel"));
+        el.classList.toggle("active", panelStep === step);
+    });
+}
+
+function cfRenderAcademicResults(results) {
+    const container = document.getElementById("cf-ac-results");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!results.length) {
+        container.innerHTML = "<p class='cf-empty-message'>No resources found. Try another subject or keyword.</p>";
+        return;
+    }
+
+    results.forEach((item) => {
+        const isSaved = cfAcademicState.savedIds.includes(item.id);
+        const card = document.createElement("article");
+        card.className = "cf-academic-result-card";
+        card.innerHTML = `
+            <div class="cf-academic-result-top">
+                <h4>${cfEscapeHtml(item.title)}</h4>
+                <span>${cfEscapeHtml(item.type)}</span>
+            </div>
+            <p>${cfEscapeHtml(item.summary)}</p>
+            <p class="cf-academic-result-meta">
+                ${cfEscapeHtml(item.branch)} | Sem ${cfEscapeHtml(item.semester)} | ${cfEscapeHtml(item.subject)}
+            </p>
+            <div class="cf-academic-result-actions">
+                <a href="${cfEscapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Open</a>
+                <button type="button" onclick="cfToggleAcademicBookmark('${item.id}')">${isSaved ? "Saved" : "Save"}</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function cfRenderAcademicSaved() {
+    const container = document.getElementById("cf-ac-saved-list");
+    if (!container) return;
+
+    const saved = cfAcademicResources.filter((item) => cfAcademicState.savedIds.includes(item.id));
+    container.innerHTML = "";
+    if (!saved.length) {
+        container.innerHTML = "<p class='cf-empty-message'>No saved resources yet.</p>";
+        return;
+    }
+
+    saved.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "cf-academic-saved-item";
+        row.innerHTML = `
+            <p><strong>${cfEscapeHtml(item.title)}</strong> (${cfEscapeHtml(item.type)})</p>
+            <p class="cf-academic-result-meta">${cfEscapeHtml(item.subject)} | ${cfEscapeHtml(item.branch)} Sem ${cfEscapeHtml(item.semester)}</p>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function cfToggleAcademicBookmark(id) {
+    if (cfAcademicState.savedIds.includes(id)) {
+        cfAcademicState.savedIds = cfAcademicState.savedIds.filter((itemId) => itemId !== id);
+    } else {
+        cfAcademicState.savedIds = [...cfAcademicState.savedIds, id];
+    }
+
+    localStorage.setItem("cfAcademicSavedResources", JSON.stringify(cfAcademicState.savedIds));
+    cfRenderAcademicResults(cfAcademicState.results);
+    cfRenderAcademicSaved();
+}
+
+function cfRunAcademicSearch() {
+    const branch = document.getElementById("cf-ac-branch")?.value || "";
+    const semester = document.getElementById("cf-ac-semester")?.value || "";
+    const subject = document.getElementById("cf-ac-subject")?.value || "";
+    const query = (document.getElementById("cf-ac-query")?.value || "").trim().toLowerCase();
+    const type = document.getElementById("cf-ac-type")?.value || "all";
+
+    const results = cfAcademicResources.filter((item) => {
+        const matchesCore =
+            item.branch === branch &&
+            item.semester === semester &&
+            item.subject === subject;
+        const matchesType = type === "all" || item.type === type;
+        const haystack = `${item.title} ${item.summary} ${item.subject}`.toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        return matchesCore && matchesType && matchesQuery;
+    });
+
+    cfAcademicState.results = results;
+    cfRenderAcademicResults(results);
+}
+
+function cfInitAcademicDiscovery() {
+    const page = document.getElementById("cf-academic-page");
+    if (!page) return;
+
+    const branchSelect = document.getElementById("cf-ac-branch");
+    const semesterSelect = document.getElementById("cf-ac-semester");
+    const subjectSelect = document.getElementById("cf-ac-subject");
+    if (!branchSelect || !semesterSelect || !subjectSelect) return;
+
+    const branches = cfGetAcademicBranches();
+    branchSelect.innerHTML = "<option value=''>Select Branch</option>" +
+        branches.map((branch) => `<option value="${cfEscapeHtml(branch)}">${cfEscapeHtml(branch)}</option>`).join("");
+    subjectSelect.innerHTML = "<option value=''>Select Subject</option>";
+
+    try {
+        const saved = JSON.parse(localStorage.getItem("cfAcademicSavedResources") || "[]");
+        if (Array.isArray(saved)) {
+            cfAcademicState.savedIds = saved;
+        }
+    } catch (error) {
+        cfAcademicState.savedIds = [];
+    }
+    cfRenderAcademicSaved();
+
+    const updateSubjects = () => {
+        const branch = branchSelect.value;
+        const semester = semesterSelect.value;
+        const subjects = cfGetAcademicSubjects(branch, semester);
+        subjectSelect.innerHTML = "<option value=''>Select Subject</option>" +
+            subjects.map((subject) => `<option value="${cfEscapeHtml(subject)}">${cfEscapeHtml(subject)}</option>`).join("");
+    };
+
+    branchSelect.addEventListener("change", updateSubjects);
+    semesterSelect.addEventListener("change", updateSubjects);
+
+    document.getElementById("cf-ac-step1-next")?.addEventListener("click", () => {
+        if (!branchSelect.value || !semesterSelect.value) {
+            alert("Please select branch and semester first.");
+            return;
+        }
+        updateSubjects();
+        cfSetAcademicStep(2);
+    });
+    document.getElementById("cf-ac-step2-back")?.addEventListener("click", () => cfSetAcademicStep(1));
+    document.getElementById("cf-ac-step2-next")?.addEventListener("click", () => {
+        if (!subjectSelect.value) {
+            alert("Please select a subject.");
+            return;
+        }
+        cfSetAcademicStep(3);
+    });
+    document.getElementById("cf-ac-step3-back")?.addEventListener("click", () => cfSetAcademicStep(2));
+    document.getElementById("cf-ac-run-search")?.addEventListener("click", cfRunAcademicSearch);
+
+    cfSetAcademicStep(1);
+}
+
 function cfRenderStudentCurrentAffairs(items) {
     const container = document.getElementById("cf-student-current-affairs");
     if (!container) return;
@@ -819,6 +1179,7 @@ document.addEventListener("DOMContentLoaded", () => {
         !!document.getElementById("cf-booking-form") ||
         !!document.getElementById("cf-food-review-form") ||
         !!document.getElementById("cf-commute-form") ||
+        !!document.getElementById("cf-academic-page") ||
         !!document.getElementById("cf-admin-booking-container") ||
         !!document.getElementById("cf-student-home") ||
         !!document.getElementById("cf-room-booking-page") ||
@@ -862,6 +1223,8 @@ document.addEventListener("DOMContentLoaded", () => {
         commuteForm.addEventListener("submit", cfSubmitCommuteEta);
         cfFetchCommuteEntries();
     }
+
+    cfInitAcademicDiscovery();
 
     if (document.getElementById("cf-admin-booking-container")) {
         Promise.all([cfFetchAdminBookings(), cfFetchAdminCommuteAlerts(), cfFetchCurrentAffairs()]);
