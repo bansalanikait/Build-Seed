@@ -258,6 +258,7 @@ function cfRenderNotes() {
     cfNoteState.items.forEach((item) => {
         const row = document.createElement("article");
         row.className = "cf-note-item";
+        row.dataset.noteId = String(item.id ?? "");
         row.innerHTML = `
             <div class="cf-note-head">
                 <h4>${cfEscapeHtml(item.title)}</h4>
@@ -266,7 +267,6 @@ function cfRenderNotes() {
             <p>${cfEscapeHtml(item.text)}</p>
             <span>${cfEscapeHtml(item.created_at)}</span>
         `;
-        row.querySelector(".cf-note-delete")?.addEventListener("click", () => cfDeleteNote(item.id));
         list.appendChild(row);
     });
 }
@@ -275,6 +275,71 @@ function cfDeleteNote(id) {
     cfNoteState.items = cfNoteState.items.filter((item) => item.id !== id);
     cfSaveNotes();
     cfRenderNotes();
+}
+
+function cfInitActionDelegates() {
+    if (document.body?.dataset.cfDelegatesBound === "1") return;
+    if (document.body) {
+        document.body.dataset.cfDelegatesBound = "1";
+    }
+
+    document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+
+        const noteDeleteBtn = target.closest(".cf-note-delete");
+        if (noteDeleteBtn) {
+            const noteId = noteDeleteBtn.closest(".cf-note-item")?.dataset.noteId;
+            if (noteId) cfDeleteNote(noteId);
+            return;
+        }
+
+        const bookingArrivalBtn = target.closest("#cf-booking-list-container .cf-arrival-btn");
+        if (bookingArrivalBtn) {
+            const bookingId = bookingArrivalBtn.closest(".cf-booking-item")?.dataset.bookingId;
+            if (bookingId) cfMarkBookingArrived(bookingId);
+            return;
+        }
+
+        const commuteArrivalBtn = target.closest("#cf-commute-list-container .cf-arrival-btn");
+        if (commuteArrivalBtn) {
+            const commuteId = commuteArrivalBtn.closest(".cf-booking-item")?.dataset.commuteId;
+            if (commuteId) cfMarkCommuteArrived(commuteId);
+            return;
+        }
+
+        const saveResourceBtn = target.closest(".cf-academic-save-btn");
+        if (saveResourceBtn) {
+            const resourceId = saveResourceBtn.closest(".cf-academic-result-card")?.dataset.resourceId;
+            if (resourceId) cfToggleAcademicBookmark(resourceId);
+            return;
+        }
+
+        const currentAffairActionBtn = target.closest("#cf-admin-current-affairs-container button[data-action]");
+        if (currentAffairActionBtn) {
+            const affairId = currentAffairActionBtn.closest(".cf-current-affair-item")?.dataset.affairId;
+            const action = currentAffairActionBtn.getAttribute("data-action");
+            if (!affairId) return;
+            if (action === "edit") {
+                cfEditCurrentAffair(affairId);
+            } else if (action === "delete") {
+                cfDeleteCurrentAffair(affairId);
+            }
+            return;
+        }
+
+        const adminBookingActionBtn = target.closest("#cf-admin-booking-container button[data-action]");
+        if (adminBookingActionBtn) {
+            const bookingId = adminBookingActionBtn.closest(".cf-booking-item")?.dataset.bookingId;
+            const action = adminBookingActionBtn.getAttribute("data-action");
+            if (!bookingId) return;
+            if (action === "approve") {
+                cfApproveBooking(bookingId);
+            } else if (action === "reject") {
+                cfRejectBooking(bookingId);
+            }
+        }
+    });
 }
 
 function cfInitNoteBoard() {
@@ -412,6 +477,7 @@ function cfRenderStudentBookingList(bookings) {
         const item = document.createElement("div");
         item.className = "cf-booking-item";
         item.dataset.status = (booking.status || "").toLowerCase();
+        item.dataset.bookingId = String(booking.id ?? "");
         const canMarkArrival = (booking.status || "").toLowerCase() !== "rejected" && !booking.has_arrived;
         item.innerHTML = `
             <p><strong>Room:</strong> ${cfEscapeHtml(booking.room)}</p>
@@ -428,9 +494,6 @@ function cfRenderStudentBookingList(bookings) {
                     : ""
             }
         `;
-        if (canMarkArrival) {
-            item.querySelector(".cf-arrival-btn")?.addEventListener("click", () => cfMarkBookingArrived(booking.id));
-        }
         container.appendChild(item);
     });
 }
@@ -679,6 +742,7 @@ function cfRenderCommuteEntries(entries) {
     entries.forEach((entry) => {
         const item = document.createElement("div");
         item.className = "cf-booking-item";
+        item.dataset.commuteId = String(entry.id ?? "");
         const canMarkArrival = !entry.has_arrived;
         item.innerHTML = `
             <p><strong>Date:</strong> ${cfEscapeHtml(entry.date)}</p>
@@ -689,9 +753,6 @@ function cfRenderCommuteEntries(entries) {
             ${entry.alert_message ? `<p class="cf-arrival-alert">${cfEscapeHtml(entry.alert_message)}</p>` : ""}
             ${canMarkArrival ? '<button type="button" class="cf-arrival-btn">Mark Arrived</button>' : ""}
         `;
-        if (canMarkArrival) {
-            item.querySelector(".cf-arrival-btn")?.addEventListener("click", () => cfMarkCommuteArrived(entry.id));
-        }
         container.appendChild(item);
     });
 }
@@ -784,6 +845,7 @@ function cfRenderAcademicResults(results) {
         const isSaved = cfAcademicState.savedIds.includes(item.id);
         const card = document.createElement("article");
         card.className = "cf-academic-result-card";
+        card.dataset.resourceId = String(item.id ?? "");
         card.innerHTML = `
             <div class="cf-academic-result-top">
                 <h4>${cfEscapeHtml(item.title)}</h4>
@@ -798,7 +860,6 @@ function cfRenderAcademicResults(results) {
                 <button type="button" class="cf-academic-save-btn">${isSaved ? "Saved" : "Save"}</button>
             </div>
         `;
-        card.querySelector(".cf-academic-save-btn")?.addEventListener("click", () => cfToggleAcademicBookmark(item.id));
         container.appendChild(card);
     });
 }
@@ -954,6 +1015,7 @@ function cfRenderAdminCurrentAffairs(items) {
     items.forEach((item) => {
         const row = document.createElement("article");
         row.className = "cf-current-affair-item";
+        row.dataset.affairId = String(item.id ?? "");
         row.innerHTML = `
             <p class="cf-current-affair-meta">
                 <strong>${cfEscapeHtml(item.event_date)}</strong>
@@ -966,8 +1028,6 @@ function cfRenderAdminCurrentAffairs(items) {
                 <button type="button" class="cf-admin-action reject" data-action="delete">Delete</button>
             </div>
         `;
-        row.querySelector('[data-action="edit"]')?.addEventListener("click", () => cfEditCurrentAffair(item.id));
-        row.querySelector('[data-action="delete"]')?.addEventListener("click", () => cfDeleteCurrentAffair(item.id));
         container.appendChild(row);
     });
 }
@@ -1162,6 +1222,7 @@ async function cfFetchAdminBookings() {
             const row = document.createElement("div");
             row.className = "cf-booking-item";
             row.dataset.status = (booking.status || "").toLowerCase();
+            row.dataset.bookingId = String(booking.id ?? "");
             if (booking.safety_alert) {
                 row.classList.add("cf-booking-alert");
             }
@@ -1184,16 +1245,6 @@ async function cfFetchAdminBookings() {
                 ${booking.safety_alert ? `<p class="cf-admin-alert-inline">${cfEscapeHtml(booking.safety_alert_message)}</p>` : ""}
                 ${actionButtonsHtml}
             `;
-            row.querySelectorAll("button[data-action]").forEach((button) => {
-                const action = button.getAttribute("data-action");
-                button.addEventListener("click", () => {
-                    if (action === "approve") {
-                        cfApproveBooking(booking.id);
-                    } else if (action === "reject") {
-                        cfRejectBooking(booking.id);
-                    }
-                });
-            });
             container.appendChild(row);
         });
     } catch (error) {
@@ -1272,6 +1323,8 @@ async function cfRejectBooking(id) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    cfInitActionDelegates();
+
     const token = localStorage.getItem("cfFirebaseIdToken");
     const isProtectedPage =
         !!document.getElementById("cf-booking-form") ||

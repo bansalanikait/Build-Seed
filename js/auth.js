@@ -1,7 +1,7 @@
 /*************************************************
     CampusFlow Firebase Authentication
 *************************************************/
-const CF_API_BASE = "https://build-seed.onrender.com";
+const CF_AUTH_API_BASE = "https://build-seed.onrender.com";
 
 const cfElTabLogin = document.getElementById("cf-tab-login");
 const cfElTabSignup = document.getElementById("cf-tab-signup");
@@ -23,7 +23,7 @@ if (cfElTabLogin && cfElTabSignup) {
     cfElTabSignup.addEventListener("click", () => cfSetAuthTab("signup"));
 }
 
-async function cfHandlePostAuthRedirect(email) {
+async function cfHandlePostAuthRedirect() {
     const currentUser = cfFirebaseAuth.currentUser;
     if (!currentUser) return;
     const token = await currentUser.getIdToken();
@@ -39,7 +39,7 @@ async function cfHandlePostAuthRedirect(email) {
 
 async function cfResolveIsAdmin(token) {
     try {
-        const response = await fetch(`${CF_API_BASE}/api/me`, {
+        const response = await fetch(`${CF_AUTH_API_BASE}/api/me`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`
@@ -65,7 +65,7 @@ const cfIsAuthScreen = !!document.getElementById("cf-login-form") || !!document.
 if (cfIsAuthScreen) {
     cfFirebaseAuth.onAuthStateChanged(async (cfUser) => {
         if (!cfUser) return;
-        await cfHandlePostAuthRedirect(cfUser.email || "");
+        await cfHandlePostAuthRedirect();
     });
 }
 
@@ -88,7 +88,7 @@ if (cfElLoginForm) {
                 cfInputEmailValue,
                 cfInputPasswordValue
             );
-            await cfHandlePostAuthRedirect(cfInputEmailValue);
+            await cfHandlePostAuthRedirect();
 
         } catch (cfLoginError) {
 
@@ -132,7 +132,7 @@ if (cfElSignupForm) {
                 await cfUserCredential.user.updateProfile({ displayName: cfInputNameValue });
             }
 
-            await cfHandlePostAuthRedirect(cfInputEmailValue);
+            await cfHandlePostAuthRedirect();
         } catch (cfSignupError) {
             console.error("Firebase Signup Error:", cfSignupError);
             cfElSignupError.innerText = cfSignupError.message;
