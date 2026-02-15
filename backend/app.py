@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
+import os
 import re
 from datetime import datetime
 
@@ -32,22 +33,65 @@ def verify_token(req):
 
 
 def is_admin_user(user):
-    # Prefer Firebase custom claim `admin=true`; keep demo fallback for existing test accounts.
-    return bool(user.get("admin")) or "admin" in user.get("email", "").lower()
+    # Allow admins via Firebase custom claim and optional explicit allowlist.
+    if bool(user.get("admin")):
+        return True
+
+    admin_emails = {
+        email.strip().lower()
+        for email in os.getenv("ADMIN_EMAILS", "").split(",")
+        if email.strip()
+    }
+    user_email = str(user.get("email", "")).strip().lower()
+    return bool(user_email) and user_email in admin_emails
 
 
-def has_conflict(room, date, start_time, end_time):
+def has_conflict(room, date, start_time, end_time, transaction=None):
+    start_dt = parse_datetime_parts(date, start_time)
+    end_dt = parse_datetime_parts(date, end_time)
+    if not start_dt or not end_dt:
+        return True
+
     existing = (
         db.collection("bookings")
         .where("room", "==", room)
         .where("date", "==", date)
-        .stream()
+        .stream(transaction=transaction)
     )
     for booking in existing:
-        b = booking.to_dict()
-        if not (end_time <= b.get("start_time", "") or start_time >= b.get("end_time", "")):
+        b = booking.to_dict() or {}
+        existing_start = parse_datetime_parts(date, b.get("start_time", ""))
+        existing_end = parse_datetime_parts(date, b.get("end_time", ""))
+        if not existing_start or not existing_end:
+            continue
+        if start_dt < existing_end and end_dt > existing_start:
             return True
     return False
+
+
+def get_booking_lock_id(room, date):
+    normalized_room = re.sub(r"[^A-Za-z0-9_.-]", "_", str(room or "").strip())
+    return f"{normalized_room}__{date}"
+
+
+def create_booking_transaction(room, date, start_time, end_time, payload):
+    booking_doc_ref = db.collection("bookings").document()
+    lock_doc_ref = db.collection("booking_locks").document(get_booking_lock_id(room, date))
+
+    @firestore.transactional
+    def txn_handler(transaction):
+        # Serialize writes for the same room/date to reduce double-booking races.
+        transaction.set(lock_doc_ref, {"updated_at": firestore.SERVER_TIMESTAMP}, merge=True)
+
+        if has_conflict(room, date, start_time, end_time, transaction=transaction):
+            return False
+
+        transaction.set(booking_doc_ref, payload)
+        return True
+
+    transaction = db.transaction()
+    created = txn_handler(transaction)
+    return created, booking_doc_ref.id
 
 
 def is_valid_week_format(week):
@@ -139,33 +183,43 @@ def create_booking():
     purpose = data["purpose"]
     user_email = user.get("email", "")
 
-    if start_time > expected_arrival_time or expected_arrival_time > end_time:
+    start_dt = parse_datetime_parts(date, start_time)
+    end_dt = parse_datetime_parts(date, end_time)
+    expected_dt = parse_datetime_parts(date, expected_arrival_time)
+    if not start_dt or not end_dt or not expected_dt:
+        return jsonify({"error": "Invalid date or time format. Use YYYY-MM-DD and HH:MM."}), 400
+
+    if start_dt >= end_dt:
+        return jsonify({"error": "End time must be greater than start time."}), 400
+
+    if start_dt > expected_dt or expected_dt > end_dt:
         return jsonify({"error": "Expected arrival time must be between start and end time."}), 400
 
-    if has_conflict(room, date, start_time, end_time):
-        return jsonify({"status": "conflict", "message": "Room already booked"}), 400
+    payload = {
+        "room": room,
+        "date": date,
+        "start_time": start_time,
+        "end_time": end_time,
+        "expected_arrival_time": expected_arrival_time,
+        "purpose": purpose,
+        "user": user_email,
+        "status": "Pending",
+        "has_arrived": False,
+        "arrival_marked_at": None,
+    }
+    try:
+        created, booking_id = create_booking_transaction(room, date, start_time, end_time, payload)
+    except Exception:
+        return jsonify({"error": "Unable to create booking at the moment. Please retry."}), 503
 
-    doc_ref = db.collection("bookings").document()
-    doc_ref.set(
-        {
-            "room": room,
-            "date": date,
-            "start_time": start_time,
-            "end_time": end_time,
-            "expected_arrival_time": expected_arrival_time,
-            "purpose": purpose,
-            "user": user_email,
-            "status": "Pending",
-            "has_arrived": False,
-            "arrival_marked_at": None,
-        }
-    )
+    if not created:
+        return jsonify({"status": "conflict", "message": "Room already booked"}), 400
 
     return jsonify(
         {
             "status": "success",
             "message": "Booking submitted",
-            "booking_id": doc_ref.id,
+            "booking_id": booking_id,
         }
     )
 
@@ -677,7 +731,12 @@ def update_booking_status(new_status):
     if not booking_id:
         return jsonify({"error": "Missing required field: id"}), 400
 
-    db.collection("bookings").document(booking_id).update({"status": new_status})
+    booking_ref = db.collection("bookings").document(booking_id)
+    booking_snapshot = booking_ref.get()
+    if not booking_snapshot.exists:
+        return jsonify({"error": "Booking not found"}), 404
+
+    booking_ref.update({"status": new_status})
     return jsonify({"status": "success", "message": f"Booking {new_status.lower()}"})
 
 
@@ -692,5 +751,5 @@ def reject_booking():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug_mode)

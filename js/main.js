@@ -261,11 +261,12 @@ function cfRenderNotes() {
         row.innerHTML = `
             <div class="cf-note-head">
                 <h4>${cfEscapeHtml(item.title)}</h4>
-                <button type="button" class="cf-note-delete" onclick="cfDeleteNote('${item.id}')">Delete</button>
+                <button type="button" class="cf-note-delete">Delete</button>
             </div>
             <p>${cfEscapeHtml(item.text)}</p>
             <span>${cfEscapeHtml(item.created_at)}</span>
         `;
+        row.querySelector(".cf-note-delete")?.addEventListener("click", () => cfDeleteNote(item.id));
         list.appendChild(row);
     });
 }
@@ -411,21 +412,25 @@ function cfRenderStudentBookingList(bookings) {
         const item = document.createElement("div");
         item.className = "cf-booking-item";
         item.dataset.status = (booking.status || "").toLowerCase();
+        const canMarkArrival = (booking.status || "").toLowerCase() !== "rejected" && !booking.has_arrived;
         item.innerHTML = `
-            <p><strong>Room:</strong> ${booking.room}</p>
-            <p><strong>Date:</strong> ${booking.date}</p>
-            <p><strong>Time:</strong> ${booking.start_time} - ${booking.end_time} (${cfGetBookingDurationLabel(booking.start_time, booking.end_time)})</p>
-            <p><strong>Expected Arrival:</strong> ${booking.expected_arrival_time || "Not set"}</p>
-            <p><strong>Purpose:</strong> ${booking.purpose}</p>
-            <p><strong>Status:</strong> ${booking.status}</p>
+            <p><strong>Room:</strong> ${cfEscapeHtml(booking.room)}</p>
+            <p><strong>Date:</strong> ${cfEscapeHtml(booking.date)}</p>
+            <p><strong>Time:</strong> ${cfEscapeHtml(booking.start_time)} - ${cfEscapeHtml(booking.end_time)} (${cfEscapeHtml(cfGetBookingDurationLabel(booking.start_time, booking.end_time))})</p>
+            <p><strong>Expected Arrival:</strong> ${cfEscapeHtml(booking.expected_arrival_time || "Not set")}</p>
+            <p><strong>Purpose:</strong> ${cfEscapeHtml(booking.purpose)}</p>
+            <p><strong>Status:</strong> ${cfEscapeHtml(booking.status)}</p>
             <p><strong>Arrival:</strong> ${booking.has_arrived ? "Arrived" : "Not Marked"}</p>
-            ${booking.safety_alert_message ? `<p class="cf-arrival-alert">${booking.safety_alert_message}</p>` : ""}
+            ${booking.safety_alert_message ? `<p class="cf-arrival-alert">${cfEscapeHtml(booking.safety_alert_message)}</p>` : ""}
             ${
-                (booking.status || "").toLowerCase() !== "rejected" && !booking.has_arrived
-                    ? `<button class="cf-arrival-btn" onclick="cfMarkBookingArrived('${booking.id}')">Mark Arrived</button>`
+                canMarkArrival
+                    ? '<button type="button" class="cf-arrival-btn">Mark Arrived</button>'
                     : ""
             }
         `;
+        if (canMarkArrival) {
+            item.querySelector(".cf-arrival-btn")?.addEventListener("click", () => cfMarkBookingArrived(booking.id));
+        }
         container.appendChild(item);
     });
 }
@@ -557,7 +562,7 @@ function cfBuildRatingBar(label, value) {
     const widthPercent = Math.max(0, Math.min(100, (safeValue / 5) * 100));
     return `
         <div class="cf-food-metric">
-            <span>${label}</span>
+            <span>${cfEscapeHtml(label)}</span>
             <div class="cf-food-meter">
                 <div class="cf-food-meter-fill" style="width:${widthPercent}%"></div>
             </div>
@@ -579,14 +584,15 @@ function cfRenderFoodSummary() {
     cfFoodReviewState.hostels.forEach((hostel) => {
         const card = document.createElement("article");
         card.className = "cf-food-summary-item";
+        const reviewCount = Number(hostel.review_count) || 0;
         const comments = (hostel.sample_comments || [])
-            .map((comment) => `<li>${comment}</li>`)
+            .map((comment) => `<li>${cfEscapeHtml(comment)}</li>`)
             .join("");
 
         card.innerHTML = `
             <div class="cf-food-summary-header">
-                <h4>${hostel.hostel}</h4>
-                <span>${hostel.review_count} review${hostel.review_count === 1 ? "" : "s"}</span>
+                <h4>${cfEscapeHtml(hostel.hostel)}</h4>
+                <span>${reviewCount} review${reviewCount === 1 ? "" : "s"}</span>
             </div>
             ${cfBuildRatingBar("Overall", hostel.avg_overall)}
             ${cfBuildRatingBar("Taste", hostel.avg_taste)}
@@ -623,7 +629,7 @@ async function cfFetchFoodReviewSummary() {
         cfFoodReviewState.hostels = data.hostels || [];
         cfRenderFoodSummary();
     } catch (error) {
-        container.innerHTML = `<p class='cf-empty-message'>${error.message || "Unable to load food review summary."}</p>`;
+        container.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load food review summary.")}</p>`;
     }
 }
 
@@ -673,15 +679,19 @@ function cfRenderCommuteEntries(entries) {
     entries.forEach((entry) => {
         const item = document.createElement("div");
         item.className = "cf-booking-item";
+        const canMarkArrival = !entry.has_arrived;
         item.innerHTML = `
-            <p><strong>Date:</strong> ${entry.date}</p>
-            <p><strong>Expected Arrival:</strong> ${entry.expected_arrival_time}</p>
-            <p><strong>Travel Mode:</strong> ${entry.travel_mode || "Not specified"}</p>
-            <p><strong>Notes:</strong> ${entry.notes || "-"}</p>
+            <p><strong>Date:</strong> ${cfEscapeHtml(entry.date)}</p>
+            <p><strong>Expected Arrival:</strong> ${cfEscapeHtml(entry.expected_arrival_time)}</p>
+            <p><strong>Travel Mode:</strong> ${cfEscapeHtml(entry.travel_mode || "Not specified")}</p>
+            <p><strong>Notes:</strong> ${cfEscapeHtml(entry.notes || "-")}</p>
             <p><strong>Arrival:</strong> ${entry.has_arrived ? "Arrived" : "Not Marked"}</p>
-            ${entry.alert_message ? `<p class="cf-arrival-alert">${entry.alert_message}</p>` : ""}
-            ${!entry.has_arrived ? `<button class="cf-arrival-btn" onclick="cfMarkCommuteArrived('${entry.id}')">Mark Arrived</button>` : ""}
+            ${entry.alert_message ? `<p class="cf-arrival-alert">${cfEscapeHtml(entry.alert_message)}</p>` : ""}
+            ${canMarkArrival ? '<button type="button" class="cf-arrival-btn">Mark Arrived</button>' : ""}
         `;
+        if (canMarkArrival) {
+            item.querySelector(".cf-arrival-btn")?.addEventListener("click", () => cfMarkCommuteArrived(entry.id));
+        }
         container.appendChild(item);
     });
 }
@@ -702,7 +712,7 @@ async function cfFetchCommuteEntries() {
         cfCommuteState.entries = data.entries || [];
         cfRenderCommuteEntries(cfCommuteState.entries);
     } catch (error) {
-        container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+        container.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load commute entries.")}</p>`;
     }
 }
 
@@ -785,9 +795,10 @@ function cfRenderAcademicResults(results) {
             </p>
             <div class="cf-academic-result-actions">
                 <a href="${cfEscapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Open</a>
-                <button type="button" onclick="cfToggleAcademicBookmark('${item.id}')">${isSaved ? "Saved" : "Save"}</button>
+                <button type="button" class="cf-academic-save-btn">${isSaved ? "Saved" : "Save"}</button>
             </div>
         `;
+        card.querySelector(".cf-academic-save-btn")?.addEventListener("click", () => cfToggleAcademicBookmark(item.id));
         container.appendChild(card);
     });
 }
@@ -951,10 +962,12 @@ function cfRenderAdminCurrentAffairs(items) {
             <p><strong>${cfEscapeHtml(item.title)}</strong></p>
             <p>${cfEscapeHtml(item.content)}</p>
             <div class="cf-current-affair-actions">
-                <button class="cf-admin-action approve" onclick="cfEditCurrentAffair('${item.id}')">Edit</button>
-                <button class="cf-admin-action reject" onclick="cfDeleteCurrentAffair('${item.id}')">Delete</button>
+                <button type="button" class="cf-admin-action approve" data-action="edit">Edit</button>
+                <button type="button" class="cf-admin-action reject" data-action="delete">Delete</button>
             </div>
         `;
+        row.querySelector('[data-action="edit"]')?.addEventListener("click", () => cfEditCurrentAffair(item.id));
+        row.querySelector('[data-action="delete"]')?.addEventListener("click", () => cfDeleteCurrentAffair(item.id));
         container.appendChild(row);
     });
 }
@@ -979,11 +992,11 @@ async function cfFetchCurrentAffairs() {
     } catch (error) {
         const studentContainer = document.getElementById("cf-student-current-affairs");
         if (studentContainer) {
-            studentContainer.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+            studentContainer.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load current affairs.")}</p>`;
         }
         const adminContainer = document.getElementById("cf-admin-current-affairs-container");
         if (adminContainer) {
-            adminContainer.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+            adminContainer.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load current affairs.")}</p>`;
         }
     }
 }
@@ -1097,7 +1110,7 @@ async function cfFetchStudentBookings() {
         cfUpdateStudentSummary(cfStudentBookingState.allBookings);
         cfApplyStudentBookingTools();
     } catch (error) {
-        container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+        container.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load bookings.")}</p>`;
     }
 }
 
@@ -1153,28 +1166,38 @@ async function cfFetchAdminBookings() {
                 row.classList.add("cf-booking-alert");
             }
             const bookingStatus = (booking.status || "").toLowerCase();
-            let actionButtons = "";
+            let actionButtons = [];
             if (bookingStatus === "pending") {
-                actionButtons = `
-                    <button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>
-                    <button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>
-                `;
+                actionButtons = ["approve", "reject"];
             } else if (bookingStatus === "approved") {
-                actionButtons = `<button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>`;
+                actionButtons = ["reject"];
             } else if (bookingStatus === "rejected") {
-                actionButtons = `<button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>`;
+                actionButtons = ["approve"];
             }
+            const actionButtonsHtml = actionButtons
+                .map((action) => `<button type="button" class="cf-admin-action ${action}" data-action="${action}">${action === "approve" ? "Approve" : "Reject"}</button>`)
+                .join("");
             row.innerHTML = `
                 <p><strong>Room:</strong> ${cfEscapeHtml(booking.room)} | <strong>Date:</strong> ${cfEscapeHtml(booking.date)} | <strong>Time:</strong> ${cfEscapeHtml(booking.start_time)} - ${cfEscapeHtml(booking.end_time)}</p>
                 <p><strong>User:</strong> ${cfEscapeHtml(booking.user)} | <strong>Purpose:</strong> ${cfEscapeHtml(booking.purpose)} | <strong>Status:</strong> ${cfEscapeHtml(booking.status)}</p>
                 <p><strong>Expected Arrival:</strong> ${cfEscapeHtml(booking.expected_arrival_time || "Not set")} | <strong>Arrival:</strong> ${booking.has_arrived ? "Arrived" : "Not Marked"}</p>
                 ${booking.safety_alert ? `<p class="cf-admin-alert-inline">${cfEscapeHtml(booking.safety_alert_message)}</p>` : ""}
-                ${actionButtons}
+                ${actionButtonsHtml}
             `;
+            row.querySelectorAll("button[data-action]").forEach((button) => {
+                const action = button.getAttribute("data-action");
+                button.addEventListener("click", () => {
+                    if (action === "approve") {
+                        cfApproveBooking(booking.id);
+                    } else if (action === "reject") {
+                        cfRejectBooking(booking.id);
+                    }
+                });
+            });
             container.appendChild(row);
         });
     } catch (error) {
-        container.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+        container.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load admin bookings.")}</p>`;
     }
 }
 
@@ -1215,7 +1238,7 @@ async function cfFetchAdminCommuteAlerts() {
             alertContainer.appendChild(row);
         });
     } catch (error) {
-        alertContainer.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+        alertContainer.innerHTML = `<p class='cf-empty-message'>${cfEscapeHtml(error.message || "Unable to load commute alerts.")}</p>`;
     }
 }
 
