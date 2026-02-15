@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CampusFlow - Student Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="cf-container">
+        <h2>Student Dashboard</h2>
+
+        <div class="cf-card">
+            <h3>Book a Classroom</h3>
+            <form id="cf-booking-form">
+                <input type="text" id="cf-input-room" placeholder="Room Number" required>
+                <input type="date" id="cf-input-date" required>
+                <input type="time" id="cf-input-start-time" required>
+                <input type="time" id="cf-input-end-time" required>
+                <button type="submit">Submit Booking</button>
+            </form>
+        </div>
+
+        <div class="cf-card">
+            <h3>Your Bookings</h3>
+            <div id="cf-booking-list-container"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <button onclick="cfHandleLogout()">Logout</button>
+
+</body>
+</html>
