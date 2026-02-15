@@ -3,6 +3,10 @@ const cfStudentBookingState = {
     allBookings: [],
     visibleBookings: []
 };
+const cfFoodReviewState = {
+    summaryWeek: "",
+    hostels: []
+};
 
 function cfGetAuthHeaders() {
     const token = localStorage.getItem("cfFirebaseIdToken");
@@ -206,6 +210,129 @@ function cfDownloadStudentBookingsCsv() {
     URL.revokeObjectURL(url);
 }
 
+function cfGetCurrentIsoWeek() {
+    const date = new Date();
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = (utcDate.getUTCDay() + 6) % 7;
+    utcDate.setUTCDate(utcDate.getUTCDate() - day + 3);
+
+    const firstThursday = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 4));
+    const firstThursdayDay = (firstThursday.getUTCDay() + 6) % 7;
+    const week = 1 + Math.round(
+        ((utcDate.getTime() - firstThursday.getTime()) / 86400000 - 3 + firstThursdayDay) / 7
+    );
+
+    return `${utcDate.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function cfBuildRatingBar(label, value) {
+    const safeValue = Number(value) || 0;
+    const widthPercent = Math.max(0, Math.min(100, (safeValue / 5) * 100));
+    return `
+        <div class="cf-food-metric">
+            <span>${label}</span>
+            <div class="cf-food-meter">
+                <div class="cf-food-meter-fill" style="width:${widthPercent}%"></div>
+            </div>
+            <strong>${safeValue.toFixed(1)}</strong>
+        </div>
+    `;
+}
+
+function cfRenderFoodSummary() {
+    const container = document.getElementById("cf-food-summary-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!cfFoodReviewState.hostels.length) {
+        container.innerHTML = "<p class='cf-empty-message'>No food reviews found for this week.</p>";
+        return;
+    }
+
+    cfFoodReviewState.hostels.forEach((hostel) => {
+        const card = document.createElement("article");
+        card.className = "cf-food-summary-item";
+        const comments = (hostel.sample_comments || [])
+            .map((comment) => `<li>${comment}</li>`)
+            .join("");
+
+        card.innerHTML = `
+            <div class="cf-food-summary-header">
+                <h4>${hostel.hostel}</h4>
+                <span>${hostel.review_count} review${hostel.review_count === 1 ? "" : "s"}</span>
+            </div>
+            ${cfBuildRatingBar("Overall", hostel.avg_overall)}
+            ${cfBuildRatingBar("Taste", hostel.avg_taste)}
+            ${cfBuildRatingBar("Hygiene", hostel.avg_hygiene)}
+            ${cfBuildRatingBar("Variety", hostel.avg_variety)}
+            ${
+                comments
+                    ? `<div class="cf-food-comments"><p>Recent feedback</p><ul>${comments}</ul></div>`
+                    : ""
+            }
+        `;
+        container.appendChild(card);
+    });
+}
+
+async function cfFetchFoodReviewSummary() {
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    const weekInput = document.getElementById("cf-food-summary-week");
+    const week = weekInput?.value || cfGetCurrentIsoWeek();
+    const container = document.getElementById("cf-food-summary-container");
+    if (!container) return;
+
+    container.innerHTML = "<p class='cf-empty-message'>Loading weekly food insights...</p>";
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/get-food-review-summary?week=${encodeURIComponent(week)}`, {
+            method: "GET",
+            headers
+        });
+        const data = await cfHandleApiResponse(response);
+        cfFoodReviewState.summaryWeek = data.week || week;
+        cfFoodReviewState.hostels = data.hostels || [];
+        cfRenderFoodSummary();
+    } catch (error) {
+        container.innerHTML = `<p class='cf-empty-message'>${error.message || "Unable to load food review summary."}</p>`;
+    }
+}
+
+async function cfSubmitFoodReview(event) {
+    event.preventDefault();
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    const payload = {
+        hostel: document.getElementById("cf-food-hostel")?.value || "",
+        week: document.getElementById("cf-food-review-week")?.value || "",
+        taste_rating: Number(document.getElementById("cf-food-rating-taste")?.value || 0),
+        hygiene_rating: Number(document.getElementById("cf-food-rating-hygiene")?.value || 0),
+        variety_rating: Number(document.getElementById("cf-food-rating-variety")?.value || 0),
+        comment: (document.getElementById("cf-food-comment")?.value || "").trim()
+    };
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/submit-food-review`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload)
+        });
+        const data = await cfHandleApiResponse(response);
+        alert(data.message || "Food review submitted");
+        document.getElementById("cf-food-comment").value = "";
+
+        const summaryWeekInput = document.getElementById("cf-food-summary-week");
+        if (summaryWeekInput) summaryWeekInput.value = payload.week;
+        await cfFetchFoodReviewSummary();
+    } catch (error) {
+        alert(error.message || "Unable to submit food review");
+    }
+}
+
 async function cfFetchStudentBookings() {
     const container = document.getElementById("cf-booking-list-container");
     if (!container) return;
@@ -296,8 +423,14 @@ async function cfRejectBooking(id) {
 
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("cfFirebaseIdToken");
-    const isDashboardPage = !!document.getElementById("cf-booking-form") || !!document.getElementById("cf-admin-booking-container");
-    if (isDashboardPage && !token) {
+    const isProtectedPage =
+        !!document.getElementById("cf-booking-form") ||
+        !!document.getElementById("cf-food-review-form") ||
+        !!document.getElementById("cf-admin-booking-container") ||
+        !!document.getElementById("cf-student-home") ||
+        !!document.getElementById("cf-room-booking-page") ||
+        !!document.getElementById("cf-food-review-page");
+    if (isProtectedPage && !token) {
         window.location.href = "index.html";
         return;
     }
@@ -310,6 +443,20 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("cf-booking-sort")?.addEventListener("change", cfApplyStudentBookingTools);
         document.getElementById("cf-export-bookings-btn")?.addEventListener("click", cfDownloadStudentBookingsCsv);
         cfFetchStudentBookings();
+    }
+
+    const foodReviewForm = document.getElementById("cf-food-review-form");
+    if (foodReviewForm) {
+        const currentWeek = cfGetCurrentIsoWeek();
+        const reviewWeekInput = document.getElementById("cf-food-review-week");
+        const summaryWeekInput = document.getElementById("cf-food-summary-week");
+
+        if (reviewWeekInput) reviewWeekInput.value = currentWeek;
+        if (summaryWeekInput) summaryWeekInput.value = currentWeek;
+
+        foodReviewForm.addEventListener("submit", cfSubmitFoodReview);
+        document.getElementById("cf-food-refresh-btn")?.addEventListener("click", cfFetchFoodReviewSummary);
+        cfFetchFoodReviewSummary();
     }
 
     if (document.getElementById("cf-admin-booking-container")) {
