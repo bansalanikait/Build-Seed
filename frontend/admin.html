@@ -5,36 +5,85 @@
     <title>CampusFlow - Admin Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="cf-page-admin">
+<body class="cf-page-admin-shell">
+    <div class="cf-admin-shell">
+        <aside class="cf-admin-sidebar">
+            <div class="cf-admin-brand">
+                <div class="cf-admin-brand-icon">CF</div>
+                <div>
+                    <h1>CampusFlow</h1>
+                    <p>Admin Console</p>
+                </div>
+            </div>
 
-    <header class="cf-topbar">
-        <div>
-            <p class="cf-topbar-kicker">CampusFlow</p>
-            <h1>Admin Dashboard</h1>
-        </div>
-        <button class="cf-logout-btn" onclick="cfHandleLogout()">Logout</button>
-    </header>
+            <nav class="cf-admin-nav">
+                <a class="active" href="admin.html">Dashboard</a>
+                <a href="#cf-admin-current-affairs-container">Current Affairs</a>
+                <a href="#cf-admin-alert-container">Booking Alerts</a>
+                <a href="#cf-admin-commute-alert-container">Commute Alerts</a>
+                <a href="#cf-admin-booking-container">Booking Queue</a>
+            </nav>
 
-    <div class="cf-container cf-admin-container">
-        <div class="cf-card cf-admin-intro">
-            <h2>Booking Review Center</h2>
-            <p>Approve or reject pending classroom requests and monitor booking activity.</p>
-        </div>
+            <button class="cf-logout-btn" onclick="cfHandleLogout()">Logout</button>
+        </aside>
 
-        <div class="cf-card">
-            <h3>Student Safety Alerts</h3>
-            <div id="cf-admin-alert-container"></div>
-        </div>
+        <main class="cf-admin-main">
+            <header class="cf-admin-main-header">
+                <h2>Admin Dashboard</h2>
+                <p>Manage bookings, commute safety alerts, and NITJ current affairs from one workspace.</p>
+                <button type="button" id="cf-admin-refresh-btn">Refresh Dashboard</button>
+            </header>
 
-        <div class="cf-card">
-            <h3>Commute Safety Alerts</h3>
-            <div id="cf-admin-commute-alert-container"></div>
-        </div>
+            <div class="cf-container cf-admin-container">
+                <div class="cf-admin-stats-grid">
+                    <div class="cf-admin-stat-card">
+                        <span>Total Bookings</span>
+                        <strong id="cf-admin-stat-bookings">0</strong>
+                    </div>
+                    <div class="cf-admin-stat-card">
+                        <span>Booking Safety Alerts</span>
+                        <strong id="cf-admin-stat-booking-alerts">0</strong>
+                    </div>
+                    <div class="cf-admin-stat-card">
+                        <span>Commute Alerts</span>
+                        <strong id="cf-admin-stat-commute-alerts">0</strong>
+                    </div>
+                    <div class="cf-admin-stat-card">
+                        <span>Current Affairs</span>
+                        <strong id="cf-admin-stat-affairs">0</strong>
+                    </div>
+                </div>
 
-        <div class="cf-card">
-            <h3>All Booking Requests</h3>
-            <div id="cf-admin-booking-container"></div>
-        </div>
+                <div class="cf-card">
+                    <h3>Manage NITJ Current Affairs</h3>
+                    <form id="cf-current-affair-form" class="cf-current-affair-form">
+                        <input type="hidden" id="cf-current-affair-id">
+                        <input type="text" id="cf-current-affair-title" placeholder="Title" required>
+                        <input type="date" id="cf-current-affair-date" required>
+                        <input type="text" id="cf-current-affair-category" placeholder="Category (Optional)">
+                        <textarea id="cf-current-affair-content" placeholder="Write update details" required></textarea>
+                        <button type="submit" id="cf-current-affair-submit-btn">Publish Update</button>
+                        <button type="button" id="cf-current-affair-cancel-btn" class="cf-admin-action reject" style="display:none;">Cancel Edit</button>
+                    </form>
+                    <div id="cf-admin-current-affairs-container"></div>
+                </div>
+
+                <div class="cf-card">
+                    <h3>Student Safety Alerts</h3>
+                    <div id="cf-admin-alert-container"></div>
+                </div>
+
+                <div class="cf-card">
+                    <h3>Commute Safety Alerts</h3>
+                    <div id="cf-admin-commute-alert-container"></div>
+                </div>
+
+                <div class="cf-card">
+                    <h3>All Booking Requests</h3>
+                    <div id="cf-admin-booking-container"></div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- Firebase SDK -->

@@ -5,78 +5,101 @@
     <title>CampusFlow - Room Booking</title>
     <link rel="stylesheet" href="css/style_student.css">
 </head>
-<body>
+<body class="cf-app-body">
 
-    <div class="cf-container" id="cf-room-booking-page">
-        <h2>Room Booking</h2>
-        <div class="cf-page-links">
-            <a href="student.html" class="cf-nav-link">Back to Modules</a>
-        </div>
-
-        <section class="cf-dashboard-section cf-room-section">
-            <div class="cf-section-header">
-                <h3>Room Booker</h3>
-                <p>Submit classroom requests and track approvals in one place.</p>
-            </div>
-
-            <div class="cf-card">
-                <h3>Book a Classroom</h3>
-                <form id="cf-booking-form">
-                    <input type="text" id="cf-input-room" placeholder="Room Number" required>
-                    <input type="date" id="cf-input-date" required>
-                    <input type="time" id="cf-input-start-time" required>
-                    <input type="time" id="cf-input-end-time" required>
-                    <label for="cf-input-expected-arrival" class="cf-booking-label">Expected Arrival Time</label>
-                    <input type="time" id="cf-input-expected-arrival" required>
-                    <input type="text" id="cf-input-purpose" placeholder="Purpose" required>
-                    <button type="submit">Submit Booking</button>
-                </form>
-            </div>
-
-            <div class="cf-card">
-                <h3>Your Bookings</h3>
-                <div class="cf-booking-summary" id="cf-booking-summary">
-                    <div class="cf-summary-item">
-                        <span class="cf-summary-label">Total</span>
-                        <strong id="cf-summary-total">0</strong>
-                    </div>
-                    <div class="cf-summary-item">
-                        <span class="cf-summary-label">Pending</span>
-                        <strong id="cf-summary-pending">0</strong>
-                    </div>
-                    <div class="cf-summary-item">
-                        <span class="cf-summary-label">Approved</span>
-                        <strong id="cf-summary-approved">0</strong>
-                    </div>
-                    <div class="cf-summary-item">
-                        <span class="cf-summary-label">Rejected</span>
-                        <strong id="cf-summary-rejected">0</strong>
-                    </div>
+    <div class="cf-app-shell" id="cf-room-booking-page">
+        <aside class="cf-app-sidebar">
+            <div class="cf-app-brand">
+                <div class="cf-app-logo">CF</div>
+                <div>
+                    <h1>CampusFlow</h1>
+                    <p>NITJ Student</p>
                 </div>
-
-                <div class="cf-booking-tools">
-                    <input
-                        type="text"
-                        id="cf-booking-search"
-                        placeholder="Search by room or purpose"
-                        aria-label="Search bookings"
-                    >
-                    <select id="cf-booking-status-filter" aria-label="Filter by booking status">
-                        <option value="all">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                    </select>
-                    <select id="cf-booking-sort" aria-label="Sort bookings">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                    </select>
-                    <button type="button" id="cf-export-bookings-btn">Export CSV</button>
-                </div>
-
-                <div id="cf-booking-list-container"></div>
             </div>
-        </section>
+
+            <nav class="cf-app-nav">
+                <a href="student.html">Dashboard</a>
+                <a class="active" href="room_booking.html">Room Booking</a>
+                <a href="food_review.html">Food Review</a>
+                <a href="commute_tracker.html">Safe Arrival</a>
+            </nav>
+
+            <button class="cf-side-logout" onclick="cfHandleLogout()">Logout</button>
+        </aside>
+
+        <main class="cf-app-main">
+            <header class="cf-app-header">
+                <h2>Room Booking</h2>
+                <p>Submit requests, manage arrivals, and track booking status.</p>
+            </header>
+
+            <section class="cf-app-canvas">
+                <section class="cf-dashboard-section cf-room-section">
+                    <div class="cf-section-header">
+                        <h3>Room Booker</h3>
+                        <p>Submit classroom requests and track approvals in one place.</p>
+                    </div>
+
+                    <div class="cf-card">
+                        <h3>Book a Classroom</h3>
+                        <form id="cf-booking-form">
+                            <input type="text" id="cf-input-room" placeholder="Room Number" required>
+                            <input type="date" id="cf-input-date" required>
+                            <input type="time" id="cf-input-start-time" required>
+                            <input type="time" id="cf-input-end-time" required>
+                            <label for="cf-input-expected-arrival" class="cf-booking-label">Expected Arrival Time</label>
+                            <input type="time" id="cf-input-expected-arrival" required>
+                            <input type="text" id="cf-input-purpose" placeholder="Purpose" required>
+                            <button type="submit">Submit Booking</button>
+                        </form>
+                    </div>
+
+                    <div class="cf-card">
+                        <h3>Your Bookings</h3>
+                        <div class="cf-booking-summary" id="cf-booking-summary">
+                            <div class="cf-summary-item">
+                                <span class="cf-summary-label">Total</span>
+                                <strong id="cf-summary-total">0</strong>
+                            </div>
+                            <div class="cf-summary-item">
+                                <span class="cf-summary-label">Pending</span>
+                                <strong id="cf-summary-pending">0</strong>
+                            </div>
+                            <div class="cf-summary-item">
+                                <span class="cf-summary-label">Approved</span>
+                                <strong id="cf-summary-approved">0</strong>
+                            </div>
+                            <div class="cf-summary-item">
+                                <span class="cf-summary-label">Rejected</span>
+                                <strong id="cf-summary-rejected">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="cf-booking-tools">
+                            <input
+                                type="text"
+                                id="cf-booking-search"
+                                placeholder="Search by room or purpose"
+                                aria-label="Search bookings"
+                            >
+                            <select id="cf-booking-status-filter" aria-label="Filter by booking status">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <select id="cf-booking-sort" aria-label="Sort bookings">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                            </select>
+                            <button type="button" id="cf-export-bookings-btn">Export CSV</button>
+                        </div>
+
+                        <div id="cf-booking-list-container"></div>
+                    </div>
+                </section>
+            </section>
+        </main>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -84,7 +107,6 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
-    <button onclick="cfHandleLogout()">Logout</button>
 
 </body>
 </html>

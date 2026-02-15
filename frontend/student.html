@@ -5,30 +5,62 @@
     <title>CampusFlow - Student Dashboard</title>
     <link rel="stylesheet" href="css/style_student.css">
 </head>
-<body>
-    <div class="cf-container" id="cf-student-home">
-        <h2>Student Dashboard</h2>
-        <div class="cf-card cf-student-chooser">
-            <h3>Choose a Module</h3>
-            <p>Select where you want to go.</p>
-            <div class="cf-option-grid">
-                <a class="cf-option-card cf-option-room" href="room_booking.html">
-                    <h4>Room Booking</h4>
-                    <p>Create classroom bookings and track status.</p>
-                    <span>Open Room Booker</span>
-                </a>
-                <a class="cf-option-card cf-option-food" href="food_review.html">
-                    <h4>Food Review</h4>
-                    <p>Submit weekly hostel food ratings and see summaries.</p>
-                    <span>Open Food Review</span>
-                </a>
-                <a class="cf-option-card cf-option-commute" href="commute_tracker.html">
-                    <h4>Safe Arrival Tracker</h4>
-                    <p>Share your home-to-institute ETA and mark arrival safely.</p>
-                    <span>Open Arrival Tracker</span>
-                </a>
+<body class="cf-app-body">
+    <div class="cf-app-shell" id="cf-student-home">
+        <aside class="cf-app-sidebar">
+            <div class="cf-app-brand">
+                <div class="cf-app-logo">CF</div>
+                <div>
+                    <h1>CampusFlow</h1>
+                    <p>NITJ Student</p>
+                </div>
             </div>
-        </div>
+
+            <nav class="cf-app-nav">
+                <a class="active" href="student.html">Dashboard</a>
+                <a href="room_booking.html">Room Booking</a>
+                <a href="food_review.html">Food Review</a>
+                <a href="commute_tracker.html">Safe Arrival</a>
+            </nav>
+
+            <button class="cf-side-logout" onclick="cfHandleLogout()">Logout</button>
+        </aside>
+
+        <main class="cf-app-main">
+            <header class="cf-app-header">
+                <h2>Student Dashboard</h2>
+                <p>Choose a module and track campus activity from one place.</p>
+            </header>
+
+            <section class="cf-app-canvas">
+                <div class="cf-card">
+                    <h3>NITJ Current Affairs</h3>
+                    <div id="cf-student-current-affairs"></div>
+                </div>
+
+                <div class="cf-card cf-student-chooser">
+                    <h3>Choose a Module</h3>
+                    <p>Select where you want to go.</p>
+                    <div class="cf-option-grid">
+                        <a class="cf-option-card cf-option-room" href="room_booking.html">
+                            <h4>Room Booking</h4>
+                            <p>Create classroom bookings and track status.</p>
+                            <span>Open Room Booker</span>
+                        </a>
+                        <a class="cf-option-card cf-option-food" href="food_review.html">
+                            <h4>Food Review</h4>
+                            <p>Submit weekly hostel food ratings and see summaries.</p>
+                            <span>Open Food Review</span>
+                        </a>
+                        <a class="cf-option-card cf-option-commute" href="commute_tracker.html">
+                            <h4>Safe Arrival Tracker</h4>
+                            <p>Share your home-to-institute ETA and mark arrival safely.</p>
+                            <span>Open Arrival Tracker</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -36,7 +68,6 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
-    <button onclick="cfHandleLogout()">Logout</button>
 
 </body>
 </html>

@@ -10,6 +10,36 @@ const cfFoodReviewState = {
 const cfCommuteState = {
     entries: []
 };
+const cfCurrentAffairsState = {
+    items: [],
+    byId: {}
+};
+const cfAdminState = {
+    bookingsCount: 0,
+    bookingAlertsCount: 0,
+    commuteAlertsCount: 0,
+    currentAffairsCount: 0
+};
+
+function cfEscapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function cfUpdateAdminStats() {
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(value);
+    };
+    setText("cf-admin-stat-bookings", cfAdminState.bookingsCount);
+    setText("cf-admin-stat-booking-alerts", cfAdminState.bookingAlertsCount);
+    setText("cf-admin-stat-commute-alerts", cfAdminState.commuteAlertsCount);
+    setText("cf-admin-stat-affairs", cfAdminState.currentAffairsCount);
+}
 
 function cfGetAuthHeaders() {
     const token = localStorage.getItem("cfFirebaseIdToken");
@@ -440,6 +470,163 @@ async function cfSubmitCommuteEta(event) {
     }
 }
 
+function cfRenderStudentCurrentAffairs(items) {
+    const container = document.getElementById("cf-student-current-affairs");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!items.length) {
+        container.innerHTML = "<p class='cf-empty-message'>No updates published yet.</p>";
+        return;
+    }
+
+    items.slice(0, 8).forEach((item) => {
+        const row = document.createElement("article");
+        row.className = "cf-current-affair-student-item";
+        row.innerHTML = `
+            <h4>${cfEscapeHtml(item.title)}</h4>
+            <p>${cfEscapeHtml(item.content)}</p>
+            <p class="cf-current-affair-student-meta">
+                <strong>Date:</strong> ${cfEscapeHtml(item.event_date)}
+                ${item.category ? ` | <strong>Category:</strong> ${cfEscapeHtml(item.category)}` : ""}
+            </p>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function cfRenderAdminCurrentAffairs(items) {
+    const container = document.getElementById("cf-admin-current-affairs-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!items.length) {
+        container.innerHTML = "<p class='cf-empty-message'>No current affairs added yet.</p>";
+        return;
+    }
+
+    items.forEach((item) => {
+        const row = document.createElement("article");
+        row.className = "cf-current-affair-item";
+        row.innerHTML = `
+            <p class="cf-current-affair-meta">
+                <strong>${cfEscapeHtml(item.event_date)}</strong>
+                ${item.category ? ` | ${cfEscapeHtml(item.category)}` : ""}
+            </p>
+            <p><strong>${cfEscapeHtml(item.title)}</strong></p>
+            <p>${cfEscapeHtml(item.content)}</p>
+            <div class="cf-current-affair-actions">
+                <button class="cf-admin-action approve" onclick="cfEditCurrentAffair('${item.id}')">Edit</button>
+                <button class="cf-admin-action reject" onclick="cfDeleteCurrentAffair('${item.id}')">Delete</button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+async function cfFetchCurrentAffairs() {
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/current-affairs`, {
+            method: "GET",
+            headers
+        });
+        const data = await cfHandleApiResponse(response);
+        const items = data.items || [];
+        cfCurrentAffairsState.items = items;
+        cfCurrentAffairsState.byId = Object.fromEntries(items.map((item) => [item.id, item]));
+        cfAdminState.currentAffairsCount = items.length;
+        cfUpdateAdminStats();
+        cfRenderStudentCurrentAffairs(items);
+        cfRenderAdminCurrentAffairs(items);
+    } catch (error) {
+        const studentContainer = document.getElementById("cf-student-current-affairs");
+        if (studentContainer) {
+            studentContainer.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+        }
+        const adminContainer = document.getElementById("cf-admin-current-affairs-container");
+        if (adminContainer) {
+            adminContainer.innerHTML = `<p class='cf-empty-message'>${error.message}</p>`;
+        }
+    }
+}
+
+function cfResetCurrentAffairForm() {
+    const form = document.getElementById("cf-current-affair-form");
+    if (!form) return;
+
+    form.reset();
+    document.getElementById("cf-current-affair-id").value = "";
+    document.getElementById("cf-current-affair-submit-btn").textContent = "Publish Update";
+    document.getElementById("cf-current-affair-cancel-btn").style.display = "none";
+}
+
+function cfEditCurrentAffair(id) {
+    const item = cfCurrentAffairsState.byId[id];
+    if (!item) return;
+
+    document.getElementById("cf-current-affair-id").value = item.id;
+    document.getElementById("cf-current-affair-title").value = item.title || "";
+    document.getElementById("cf-current-affair-date").value = item.event_date || "";
+    document.getElementById("cf-current-affair-category").value = item.category || "";
+    document.getElementById("cf-current-affair-content").value = item.content || "";
+    document.getElementById("cf-current-affair-submit-btn").textContent = "Update Affair";
+    document.getElementById("cf-current-affair-cancel-btn").style.display = "inline-block";
+}
+
+async function cfDeleteCurrentAffair(id) {
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    if (!confirm("Delete this current affair update?")) return;
+
+    try {
+        const response = await fetch(`${CF_API_BASE}/api/admin/current-affairs/${id}`, {
+            method: "DELETE",
+            headers
+        });
+        await cfHandleApiResponse(response);
+        await cfFetchCurrentAffairs();
+        cfResetCurrentAffairForm();
+    } catch (error) {
+        alert(error.message || "Unable to delete current affair");
+    }
+}
+
+async function cfSubmitCurrentAffair(event) {
+    event.preventDefault();
+
+    const headers = cfGetAuthHeaders();
+    if (!headers) return;
+
+    const id = document.getElementById("cf-current-affair-id").value;
+    const payload = {
+        title: (document.getElementById("cf-current-affair-title").value || "").trim(),
+        event_date: document.getElementById("cf-current-affair-date").value,
+        category: (document.getElementById("cf-current-affair-category").value || "").trim(),
+        content: (document.getElementById("cf-current-affair-content").value || "").trim()
+    };
+
+    try {
+        const response = await fetch(
+            id ? `${CF_API_BASE}/api/admin/current-affairs/${id}` : `${CF_API_BASE}/api/admin/current-affairs`,
+            {
+                method: id ? "PUT" : "POST",
+                headers,
+                body: JSON.stringify(payload)
+            }
+        );
+        const data = await cfHandleApiResponse(response);
+        alert(data.message || "Current affair saved");
+        cfResetCurrentAffairForm();
+        await cfFetchCurrentAffairs();
+    } catch (error) {
+        alert(error.message || "Unable to save current affair");
+    }
+}
+
 async function cfMarkCommuteArrived(id) {
     const headers = cfGetAuthHeaders();
     if (!headers) return;
@@ -494,6 +681,9 @@ async function cfFetchAdminBookings() {
         const data = await cfHandleApiResponse(response);
         const bookings = data.bookings || [];
         const alerts = data.safety_alerts || [];
+        cfAdminState.bookingsCount = bookings.length;
+        cfAdminState.bookingAlertsCount = alerts.length;
+        cfUpdateAdminStats();
         const alertContainer = document.getElementById("cf-admin-alert-container");
 
         if (alertContainer) {
@@ -505,9 +695,9 @@ async function cfFetchAdminBookings() {
                     const alertRow = document.createElement("div");
                     alertRow.className = "cf-safety-alert-item";
                     alertRow.innerHTML = `
-                        <p><strong>Student:</strong> ${alertItem.user}</p>
-                        <p><strong>Room:</strong> ${alertItem.room} | <strong>Date:</strong> ${alertItem.date} | <strong>Expected Arrival:</strong> ${alertItem.expected_arrival_time}</p>
-                        <p><strong>Alert:</strong> ${alertItem.message}</p>
+                        <p><strong>Student:</strong> ${cfEscapeHtml(alertItem.user)}</p>
+                        <p><strong>Room:</strong> ${cfEscapeHtml(alertItem.room)} | <strong>Date:</strong> ${cfEscapeHtml(alertItem.date)} | <strong>Expected Arrival:</strong> ${cfEscapeHtml(alertItem.expected_arrival_time)}</p>
+                        <p><strong>Alert:</strong> ${cfEscapeHtml(alertItem.message)}</p>
                     `;
                     alertContainer.appendChild(alertRow);
                 });
@@ -527,13 +717,24 @@ async function cfFetchAdminBookings() {
             if (booking.safety_alert) {
                 row.classList.add("cf-booking-alert");
             }
+            const bookingStatus = (booking.status || "").toLowerCase();
+            let actionButtons = "";
+            if (bookingStatus === "pending") {
+                actionButtons = `
+                    <button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>
+                    <button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>
+                `;
+            } else if (bookingStatus === "approved") {
+                actionButtons = `<button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>`;
+            } else if (bookingStatus === "rejected") {
+                actionButtons = `<button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>`;
+            }
             row.innerHTML = `
-                <p><strong>Room:</strong> ${booking.room} | <strong>Date:</strong> ${booking.date} | <strong>Time:</strong> ${booking.start_time} - ${booking.end_time}</p>
-                <p><strong>User:</strong> ${booking.user} | <strong>Purpose:</strong> ${booking.purpose} | <strong>Status:</strong> ${booking.status}</p>
-                <p><strong>Expected Arrival:</strong> ${booking.expected_arrival_time || "Not set"} | <strong>Arrival:</strong> ${booking.has_arrived ? "Arrived" : "Not Marked"}</p>
-                ${booking.safety_alert ? `<p class="cf-admin-alert-inline">${booking.safety_alert_message}</p>` : ""}
-                <button class="cf-admin-action approve" onclick="cfApproveBooking('${booking.id}')">Approve</button>
-                <button class="cf-admin-action reject" onclick="cfRejectBooking('${booking.id}')">Reject</button>
+                <p><strong>Room:</strong> ${cfEscapeHtml(booking.room)} | <strong>Date:</strong> ${cfEscapeHtml(booking.date)} | <strong>Time:</strong> ${cfEscapeHtml(booking.start_time)} - ${cfEscapeHtml(booking.end_time)}</p>
+                <p><strong>User:</strong> ${cfEscapeHtml(booking.user)} | <strong>Purpose:</strong> ${cfEscapeHtml(booking.purpose)} | <strong>Status:</strong> ${cfEscapeHtml(booking.status)}</p>
+                <p><strong>Expected Arrival:</strong> ${cfEscapeHtml(booking.expected_arrival_time || "Not set")} | <strong>Arrival:</strong> ${booking.has_arrived ? "Arrived" : "Not Marked"}</p>
+                ${booking.safety_alert ? `<p class="cf-admin-alert-inline">${cfEscapeHtml(booking.safety_alert_message)}</p>` : ""}
+                ${actionButtons}
             `;
             container.appendChild(row);
         });
@@ -558,6 +759,8 @@ async function cfFetchAdminCommuteAlerts() {
         });
         const data = await cfHandleApiResponse(response);
         const alerts = data.alerts || [];
+        cfAdminState.commuteAlertsCount = alerts.length;
+        cfUpdateAdminStats();
 
         alertContainer.innerHTML = "";
         if (!alerts.length) {
@@ -569,10 +772,10 @@ async function cfFetchAdminCommuteAlerts() {
             const row = document.createElement("div");
             row.className = "cf-safety-alert-item";
             row.innerHTML = `
-                <p><strong>Student:</strong> ${entry.user}</p>
-                <p><strong>Date:</strong> ${entry.date} | <strong>ETA:</strong> ${entry.expected_arrival_time}</p>
-                <p><strong>Mode:</strong> ${entry.travel_mode || "Not specified"}</p>
-                <p><strong>Alert:</strong> ${entry.alert_message}</p>
+                <p><strong>Student:</strong> ${cfEscapeHtml(entry.user)}</p>
+                <p><strong>Date:</strong> ${cfEscapeHtml(entry.date)} | <strong>ETA:</strong> ${cfEscapeHtml(entry.expected_arrival_time)}</p>
+                <p><strong>Mode:</strong> ${cfEscapeHtml(entry.travel_mode || "Not specified")}</p>
+                <p><strong>Alert:</strong> ${cfEscapeHtml(entry.alert_message)}</p>
             `;
             alertContainer.appendChild(row);
         });
@@ -591,8 +794,7 @@ async function cfUpdateBookingStatus(id, endpoint) {
         body: JSON.stringify({ id })
     });
     await cfHandleApiResponse(response);
-    await cfFetchAdminBookings();
-    await cfFetchAdminCommuteAlerts();
+    await Promise.all([cfFetchAdminBookings(), cfFetchAdminCommuteAlerts()]);
 }
 
 async function cfApproveBooking(id) {
@@ -662,7 +864,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (document.getElementById("cf-admin-booking-container")) {
-        cfFetchAdminBookings();
-        cfFetchAdminCommuteAlerts();
+        Promise.all([cfFetchAdminBookings(), cfFetchAdminCommuteAlerts(), cfFetchCurrentAffairs()]);
+        document.getElementById("cf-admin-refresh-btn")?.addEventListener("click", () => {
+            Promise.all([cfFetchAdminBookings(), cfFetchAdminCommuteAlerts(), cfFetchCurrentAffairs()]);
+        });
+    }
+
+    if (document.getElementById("cf-student-current-affairs")) {
+        cfFetchCurrentAffairs();
+    }
+
+    const currentAffairForm = document.getElementById("cf-current-affair-form");
+    if (currentAffairForm) {
+        currentAffairForm.addEventListener("submit", cfSubmitCurrentAffair);
+        document.getElementById("cf-current-affair-cancel-btn")?.addEventListener("click", cfResetCurrentAffairForm);
+        if (!document.getElementById("cf-admin-booking-container")) {
+            cfFetchCurrentAffairs();
+        }
     }
 });

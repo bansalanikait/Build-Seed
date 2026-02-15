@@ -159,6 +159,35 @@ body {
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
 }
 
+#cf-student-current-affairs {
+    display: grid;
+    gap: 10px;
+}
+
+.cf-current-affair-student-item {
+    border-radius: 12px;
+    border: 1px solid #dbe4ec;
+    background: #fbfdff;
+    padding: 12px;
+}
+
+.cf-current-affair-student-item h4 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+    color: #0f172a;
+}
+
+.cf-current-affair-student-item p {
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.cf-current-affair-student-meta {
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
 /* ----------- PAGE LINKS ----------- */
 .cf-page-links {
     margin-bottom: 14px;
@@ -972,6 +1001,20 @@ body.cf-dark .cf-option-card p {
     color: #94a3b8;
 }
 
+body.cf-dark .cf-current-affair-student-item {
+    border-color: #334155;
+    background: #0f172a;
+}
+
+body.cf-dark .cf-current-affair-student-item h4 {
+    color: #e2e8f0;
+}
+
+body.cf-dark .cf-current-affair-student-item p,
+body.cf-dark .cf-current-affair-student-meta {
+    color: #94a3b8;
+}
+
 body.cf-dark .cf-option-room {
     background: linear-gradient(180deg, #0b1220, #0f172a);
 }
@@ -1259,4 +1302,179 @@ body.cf-dark .cf-theme-toggle {
 /* Light mode override (admin pages safe) */
 body:not(.cf-dark) .cf-theme-toggle {
     border-color: #e5e7eb;
+}
+
+/* =========================================================
+   MODERN APP SHELL (SIGNED-IN PAGES)
+   ========================================================= */
+
+body.cf-app-body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 0% 0%, #d9def8 0%, rgba(217, 222, 248, 0) 45%),
+        radial-gradient(circle at 100% 100%, #d7f2eb 0%, rgba(215, 242, 235, 0) 42%),
+        #eef2f7;
+}
+
+.cf-app-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 270px 1fr;
+}
+
+.cf-app-sidebar {
+    background: #f8f9fd;
+    border-right: 1px solid #d9deea;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cf-app-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid #e2e7f2;
+    border-radius: 12px;
+}
+
+.cf-app-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    font-weight: 800;
+    background: linear-gradient(145deg, #5a4af6, #4237c8);
+}
+
+.cf-app-brand h1 {
+    font-size: 1rem;
+    color: #111827;
+}
+
+.cf-app-brand p {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.cf-app-nav {
+    display: grid;
+    gap: 6px;
+}
+
+.cf-app-nav a {
+    text-decoration: none;
+    color: #334155;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 11px;
+}
+
+.cf-app-nav a:hover,
+.cf-app-nav a.active {
+    color: #4338ca;
+    background: #ebe9ff;
+}
+
+.cf-side-logout {
+    margin-top: auto;
+    width: 100%;
+    display: inline-block;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #b91c1c;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cf-side-logout:hover {
+    background: #991b1b;
+}
+
+body.cf-app-body button.cf-side-logout:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.cf-app-main {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.cf-app-header {
+    background: #f7f9fc;
+    border-bottom: 1px solid #dce2ef;
+    padding: 26px 30px 18px;
+}
+
+.cf-app-header h2 {
+    font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.cf-app-header p {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.cf-app-canvas {
+    padding: 20px;
+    display: grid;
+    gap: 16px;
+}
+
+.cf-app-canvas .cf-card,
+.cf-app-canvas .cf-dashboard-section {
+    margin-bottom: 0;
+}
+
+body.cf-app-body .cf-option-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+body.cf-app-body button[onclick="cfHandleLogout()"] {
+    margin: 0;
+    width: auto;
+    box-shadow: none;
+}
+
+@media (max-width: 980px) {
+    .cf-app-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .cf-app-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid #d9deea;
+    }
+
+    .cf-app-nav {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cf-app-header {
+        padding: 18px;
+    }
+
+    .cf-app-canvas {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .cf-app-nav {
+        grid-template-columns: 1fr;
+    }
 }
